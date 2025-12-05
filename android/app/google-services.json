@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "893539426217",
+    "project_id": "warrantytrackerdemo",
+    "storage_bucket": "warrantytrackerdemo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893539426217:android:a6d489151cfd521f3a6eb8",
+        "android_client_info": {
+          "package_name": "com.example.waranty_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIxNuKUbdI92-6QbXqGkwIzK1AVyt1s6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

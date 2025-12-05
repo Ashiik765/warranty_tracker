@@ -20,7 +20,7 @@ class _ScanPageState extends State<ScanPage> {
   DateTime? selectedExpiry;
   File? image;
 
-  bool ocrSuccess = false; // NEW: check if OCR worked
+  bool ocrSuccess = false;
 
   final List<String> categories = [
     'Electronics',
@@ -29,7 +29,7 @@ class _ScanPageState extends State<ScanPage> {
     'Others',
   ];
 
-  // ------------ OPEN CAMERA + OCR -------------
+  // =================== SCAN FROM CAMERA ======================
   Future<void> scanFromCamera() async {
     final picked = await ImagePicker().pickImage(
       source: ImageSource.camera,
@@ -43,37 +43,40 @@ class _ScanPageState extends State<ScanPage> {
     productName = null;
     expiryDate = null;
 
-    final inputImage = InputImage.fromFile(image!);
-    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    final RecognizedText textData = await recognizer.processImage(inputImage);
+    try {
+      final inputImage = InputImage.fromFile(image!);
+      final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final RecognizedText textData = await recognizer.processImage(inputImage);
 
-    for (final block in textData.blocks) {
-      final text = block.text.toLowerCase();
+      for (final block in textData.blocks) {
+        final text = block.text.toLowerCase();
 
-      // Detect product name (simple detection)
-      if ((text.contains("name") || text.contains("product")) &&
-          productName == null) {
-        if (block.text.contains(":")) {
-          productName = block.text.split(":").last.trim();
+        // --- Detect product name ---
+        if ((text.contains("name") || text.contains("product")) &&
+            productName == null) {
+          if (block.text.contains(":")) {
+            productName = block.text.split(":").last.trim();
+          }
+        }
+
+        // --- Detect expiry date ---
+        if ((text.contains("exp") || text.contains("expiry")) &&
+            expiryDate == null) {
+          final match1 = RegExp(r'\d{4}-\d{2}-\d{2}').firstMatch(text);
+          final match2 = RegExp(r'\d{2}/\d{2}/\d{4}').firstMatch(text);
+
+          if (match1 != null) {
+            expiryDate = match1.group(0);
+          } else if (match2 != null) {
+            final parts = match2.group(0)!.split("/");
+            expiryDate = "${parts[2]}-${parts[1]}-${parts[0]}";
+          }
         }
       }
-
-      // Detect expiry date
-      if ((text.contains("exp") || text.contains("expiry")) &&
-          expiryDate == null) {
-        final match1 = RegExp(r'\d{4}-\d{2}-\d{2}').firstMatch(text);
-        final match2 = RegExp(r'\d{2}/\d{2}/\d{4}').firstMatch(text);
-
-        if (match1 != null) {
-          expiryDate = match1.group(0);
-        } else if (match2 != null) {
-          final parts = match2.group(0)!.split("/");
-          expiryDate = "${parts[2]}-${parts[1]}-${parts[0]}";
-        }
-      }
+    } catch (e) {
+      print("OCR ERROR: $e");
     }
 
-    // If detected something → OCR success
     if (productName != null || expiryDate != null) {
       ocrSuccess = true;
     }
@@ -81,7 +84,7 @@ class _ScanPageState extends State<ScanPage> {
     setState(() {});
   }
 
-  // ---------- MANUAL DATE PICKER ----------
+  // =================== PICK EXPIRY MANUALLY ======================
   void pickExpiryDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -98,7 +101,7 @@ class _ScanPageState extends State<ScanPage> {
     }
   }
 
-  // ---------- SAVE TO FIREBASE ----------
+  // =================== SAVE TO FIREBASE ======================
   Future<void> saveToFirebase() async {
     if (productName == null || expiryDate == null || category == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,16 +111,22 @@ class _ScanPageState extends State<ScanPage> {
     }
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User not logged in")),
+      );
+      return;
+    }
 
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
-        .collection('products')
+        .collection('receipts')        // FIXED COLLECTION NAME
         .add({
       'productName': productName,
       'expiryDate': expiryDate,
       'category': category,
+      'uploadType': 'Scanned',        // ADDED FIELD
       'timestamp': FieldValue.serverTimestamp(),
     });
 
@@ -129,12 +138,6 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // Removed automatic camera opening to prevent crash on startup
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -142,33 +145,40 @@ class _ScanPageState extends State<ScanPage> {
         centerTitle: true,
         backgroundColor: const Color(0xFF395EB6),
       ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF395EB6),
+        onPressed: scanFromCamera,
+        child: const Icon(Icons.camera_alt, color: Colors.white),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // ---- SHOW SCANNED IMAGE ----
+            // SHOW IMAGE
             if (image != null)
               Image.file(image!, height: 200, fit: BoxFit.cover),
 
             const SizedBox(height: 20),
 
-            // ====== OCR SUCCESSFUL ======
+            // =================== OCR SUCCESS ======================
             if (ocrSuccess) ...[
               if (productName != null)
-                Text("Product: $productName",
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  "Product: $productName",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               if (expiryDate != null)
-                Text("Expiry: $expiryDate",
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  "Expiry: $expiryDate",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               const SizedBox(height: 20),
             ]
 
-            // ====== OCR FAILED → MANUAL FORM ======
+            // =================== OCR FAILED → MANUAL ======================
             else ...[
               const Text(
-                "Could not read receipt. Please enter details manually:",
+                "Could not read receipt. Enter details manually:",
                 style: TextStyle(color: Colors.red, fontSize: 14),
               ),
               const SizedBox(height: 10),
@@ -197,7 +207,7 @@ class _ScanPageState extends State<ScanPage> {
               const SizedBox(height: 20),
             ],
 
-            // ===== CATEGORY DROPDOWN =====
+            // =================== CATEGORY DROPDOWN ======================
             DropdownButtonFormField<String>(
               value: category,
               decoration: const InputDecoration(
@@ -212,7 +222,7 @@ class _ScanPageState extends State<ScanPage> {
 
             const SizedBox(height: 30),
 
-            // ===== SAVE BUTTON =====
+            // =================== SAVE BUTTON ======================
             ElevatedButton.icon(
               onPressed: saveToFirebase,
               icon: const Icon(Icons.save),
@@ -220,8 +230,7 @@ class _ScanPageState extends State<ScanPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF395EB6),
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
               ),
             ),
           ],

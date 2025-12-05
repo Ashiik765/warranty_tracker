@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart'; 
 import 'home_page.dart';
 import 'signup_page.dart';
-import 'forgotpass_page.dart'; // <-- Already imported
+import 'forgotpass_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,30 +45,48 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // ===== App Intro with Google Fonts =====
+              Text(
+                "Smart Warranty Tracker helps you keep track of all your receipts and product warranties easily. Scan, import, or manually add your products to never lose warranty information again!",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black87,
+                  height: 1.5,
+                  fontWeight: FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // ===== Logo =====
               const Icon(
                 Icons.lock_outline,
                 size: 80,
                 color: Colors.blueAccent,
               ),
               const SizedBox(height: 16),
-              const Text(
+
+              // ===== Welcome Text =====
+              Text(
                 "Welcome Back!",
-                style: TextStyle(
+                style: GoogleFonts.roboto(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Login to your account",
-                style: TextStyle(
+                style: GoogleFonts.roboto(
                   fontSize: 16,
                   color: Colors.black54,
                 ),
               ),
               const SizedBox(height: 32),
 
-              // Email Field
+              // ===== Email Field =====
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
@@ -93,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 16),
 
-              // Password Field with Eye Icon
+              // ===== Password Field =====
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
@@ -129,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 10),
 
-              // Forgot Password Button
+              // ===== Forgot Password =====
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -147,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 10),
 
-              // Login Button
+              // ===== Login Button =====
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -159,15 +178,18 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     backgroundColor: Colors.blueAccent,
                   ),
-                  child: const Text(
+                  child: Text(
                     "Login",
-                    style: TextStyle(fontSize: 18),
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
 
-              // Sign Up Link
+              // ===== Sign Up Link =====
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -175,9 +197,11 @@ class _LoginPageState extends State<LoginPage> {
                     MaterialPageRoute(builder: (context) => const SignUpPage()),
                   );
                 },
-                child: const Text(
+                child: Text(
                   "Don't have an account? Sign Up",
-                  style: TextStyle(color: Colors.black87),
+                  style: GoogleFonts.roboto(
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ],

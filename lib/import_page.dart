@@ -14,29 +14,33 @@ class ImportPage extends StatefulWidget {
 }
 
 class _ImportPageState extends State<ImportPage> {
-  File? selectedFile;
-  String? extractedText;
-  DateTime? selectedDate;
-  String? category;
-
-  final TextEditingController productController = TextEditingController();
+  File? selectedFile; // chosen PDF/image file
+  String? extractedText; // OCR / PDF extracted text
+  DateTime? selectedDate; // expiry date chosen by user
+  String? category; // selected category
+  final TextEditingController productController = TextEditingController(); // product name input
 
   @override
   void initState() {
     super.initState();
-    // Auto-open file picker shortly after page loads
-    Future.delayed(const Duration(milliseconds: 300), () {
-      pickFile();
+    // try to auto-open file picker shortly after page loads, but protect against errors
+    Future.delayed(const Duration(milliseconds: 300), () async {
+      try {
+        await pickFile();
+      } catch (e) {
+        // ignore errors here so page doesn't crash on startup
+        debugPrint("Auto file pick error (ignored): $e");
+      }
     });
   }
 
   @override
   void dispose() {
-    productController.dispose();
+    productController.dispose(); // release controller resources
     super.dispose();
   }
 
-  // Pick a file (PDF or Image)
+  // ---------- PICK A FILE (PDF or IMAGE) ----------
   Future<void> pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -46,40 +50,36 @@ class _ImportPageState extends State<ImportPage> {
 
       if (result != null && result.files.single.path != null) {
         setState(() {
-          selectedFile = File(result.files.single.path!);
-          extractedText = null;
-          // Keep any previous productController text until we extract new
+          selectedFile = File(result.files.single.path!); // save file
+          extractedText = null; // reset previous extraction
         });
 
+        // If PDF → extract with Syncfusion, else use ML Kit OCR
         if (selectedFile!.path.toLowerCase().endsWith('.pdf')) {
           await extractTextFromPdf(selectedFile!);
         } else {
           await extractTextFromImage(selectedFile!);
         }
       } else {
-        // user cancelled — optionally pop page
-        // Navigator.pop(context);
+        // user cancelled — nothing to do
       }
     } catch (e) {
       showError("File pick error: $e");
     }
   }
 
-  // Extract text from PDF using Syncfusion
+  // ---------- EXTRACT TEXT FROM PDF ----------
   Future<void> extractTextFromPdf(File file) async {
     try {
-      final bytes = await file.readAsBytes();
-      final PdfDocument document = PdfDocument(inputBytes: bytes);
-
-      // Use PdfTextExtractor to extract all text from document
-      final PdfTextExtractor extractor = PdfTextExtractor(document);
-      final String text = extractor.extractText();
-
-      document.dispose();
+      final bytes = await file.readAsBytes(); // read PDF bytes
+      final PdfDocument document = PdfDocument(inputBytes: bytes); // open PDF
+      final PdfTextExtractor extractor = PdfTextExtractor(document); // extractor
+      final String text = extractor.extractText(); // get text
+      document.dispose(); // free document resources
 
       setState(() {
-        extractedText = text;
-        // Auto-fill product name from extracted text
+        extractedText = text; // set extracted text
+        // auto-fill product controller with best guess
         productController.text = extractProductName(text);
       });
     } catch (e) {
@@ -87,7 +87,7 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
-  // Extract text from image using ML Kit OCR
+  // ---------- EXTRACT TEXT FROM IMAGE USING ML KIT ----------
   Future<void> extractTextFromImage(File file) async {
     TextRecognizer? textRecognizer;
     try {
@@ -96,41 +96,42 @@ class _ImportPageState extends State<ImportPage> {
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
 
       setState(() {
-        extractedText = recognizedText.text;
+        extractedText = recognizedText.text; // full text
         productController.text = extractProductName(extractedText ?? '');
       });
     } catch (e) {
       showError("Error reading image: $e");
     } finally {
-      // always close recognizer if it was created
+      // always close recognizer if created to avoid resource leaks
       await textRecognizer?.close();
     }
   }
 
-  // Return a probable product name from raw text
+  // ---------- SIMPLE HEURISTIC TO PICK A PRODUCT NAME ----------
   String extractProductName(String text) {
     if (text.trim().isEmpty) return '';
 
-    // split lines by newline properly
-    List<String> lines = text.split('\n');
+    // split by newline and try to find a useful line
+    final List<String> lines = text.split('\n');
 
-    // Try to find a line that looks like a product name: longer than 3 chars and not mainly digits
     for (var line in lines) {
       final trimmed = line.trim();
+      // prefer lines longer than 3 chars and not purely symbols/digits
       if (trimmed.length > 3 && !RegExp(r'^[\d\W]+$').hasMatch(trimmed)) {
         return trimmed;
       }
     }
 
-    // fallback to first non-empty line or empty string
+    // fallback: first non-empty line
     for (var line in lines) {
       if (line.trim().isNotEmpty) return line.trim();
     }
     return '';
   }
 
-  // Save the extracted/entered product record to Firestore
+  // ---------- SAVE TO FIRESTORE (users/{uid}/receipts) ----------
   Future<void> saveToFirebase() async {
+    // basic validation: product name, date, and category required
     if (productController.text.trim().isEmpty || selectedDate == null || category == null) {
       showError("Please fill all fields");
       return;
@@ -143,29 +144,31 @@ class _ImportPageState extends State<ImportPage> {
     }
 
     try {
+      // write to receipts collection (consistent with other pages)
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection('products')
+          .collection('receipts') // FIXED COLLECTION NAME
           .add({
         'productName': productController.text.trim(),
         'expiryDate': selectedDate!.toIso8601String().split("T").first,
         'category': category,
+        'uploadType': 'Imported', // ADDED FIELD FOR CONSISTENCY
+        'sourceFile': selectedFile?.path, // optional helpful field
         'timestamp': FieldValue.serverTimestamp(),
-        // you can add e.g. 'sourceFile': selectedFile?.path
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Receipt saved successfully")),
       );
 
-      Navigator.pop(context);
+      Navigator.pop(context); // close page after save
     } catch (e) {
       showError("Error saving: $e");
     }
   }
 
-  // Open a date picker for expiry date
+  // ---------- DATE PICKER ----------
   Future<void> selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -174,27 +177,41 @@ class _ImportPageState extends State<ImportPage> {
       lastDate: DateTime(2100),
     );
 
-    if (picked != null) setState(() => selectedDate = picked);
+    if (picked != null) {
+      setState(() => selectedDate = picked);
+    }
   }
 
+  // ---------- HELPER TO SHOW ERRORS ----------
   void showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Import Receipt"),
         backgroundColor: Colors.deepPurple,
+        actions: [
+          // Allow user to re-open file picker anytime
+          IconButton(
+            tooltip: 'Pick file',
+            icon: const Icon(Icons.folder_open),
+            onPressed: () => pickFile(),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // show selected filename if exists
-            if (selectedFile != null) Text("Selected: ${selectedFile!.path.split('/').last}"),
-            const SizedBox(height: 12),
+            if (selectedFile != null) ...[
+              Text("Selected: ${selectedFile!.path.split('/').last}"),
+              const SizedBox(height: 12),
+            ],
 
             // Product name (auto filled or editable)
             TextField(
@@ -256,20 +273,16 @@ class _ImportPageState extends State<ImportPage> {
             const SizedBox(height: 20),
 
             // Show extracted raw text (optional, helps user edit)
-            if (extractedText != null)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Divider(),
-                  const Text("Extracted text (preview):", style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                    child: Text(extractedText ?? '', style: const TextStyle(fontSize: 13)),
-                  ),
-                ],
+            if (extractedText != null) ...[
+              const Divider(),
+              const Text("Extracted text (preview):", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                child: Text(extractedText ?? '', style: const TextStyle(fontSize: 13)),
               ),
+            ],
           ],
         ),
       ),

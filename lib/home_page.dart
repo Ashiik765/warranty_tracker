@@ -9,6 +9,7 @@ import 'type_receipt.dart';
 import 'product_page.dart';
 import 'profile_page.dart';
 import 'notification_page.dart';
+import 'scan_page.dart'; // <-- Add your scan page here
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -64,27 +65,22 @@ class _HomePageState extends State<HomePage> {
     required int index,
   }) {
     final isPressed = _pressedIndex == index;
-    final scale = isPressed ? 0.94 : 1.0;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressedIndex = index),
-      onTapUp: (_) => Future.delayed(const Duration(milliseconds: 100), () => setState(() => _pressedIndex = -1)),
+      onTapUp: (_) => Future.delayed(const Duration(milliseconds: 120), () => setState(() => _pressedIndex = -1)),
       onTapCancel: () => setState(() => _pressedIndex = -1),
       onTap: onTap,
       child: AnimatedScale(
         duration: const Duration(milliseconds: 120),
-        scale: scale,
-        curve: Curves.easeOut,
+        scale: isPressed ? 0.93 : 1.0,
         child: Container(
           width: 90,
           height: 90,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.95),
-                color.withOpacity(0.75),
-              ],
+              colors: [color.withOpacity(0.95), color.withOpacity(0.75)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -93,7 +89,7 @@ class _HomePageState extends State<HomePage> {
                 color: color.withOpacity(0.28),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
-              )
+              ),
             ],
           ),
           child: Column(
@@ -109,46 +105,45 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ========= FIXED: Removed blinking animation =========
   Widget _recentCard(Map<String, dynamic>? data) {
     final productName = data?['productName'] ?? 'No receipts yet';
     final category = data?['category'] ?? '-';
     final expiry = data?['expiryDate'] ?? '-';
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 450),
-      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-      child: Container(
-        key: ValueKey(productName + category + expiry),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(child: _categoryIcon(data?['category'])),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child: Center(child: _categoryIcon(data?['category'])),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(productName,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                 const SizedBox(height: 6),
                 Text("Category: $category", style: const TextStyle(color: Colors.black54)),
                 const SizedBox(height: 6),
                 Text("Expiry: $expiry", style: const TextStyle(color: Colors.black54)),
-              ]),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -185,6 +180,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) {
       Future.microtask(() {
         if (mounted) {
@@ -249,23 +245,33 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(fontSize: 17, color: Colors.white.withOpacity(0.9))),
                     const SizedBox(height: 26),
 
-                    // Action buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _actionCard(
-                            label: 'Add', icon: Icons.upload_file, color: Colors.blueGrey.shade700, onTap: openGallery, index: 0),
+                            label: 'Add',
+                            icon: Icons.upload_file,
+                            color: Colors.blueGrey.shade700,
+                            onTap: openGallery,
+                            index: 0),
                         _actionCard(
                             label: 'Scan',
                             icon: Icons.qr_code_scanner,
                             color: Colors.deepOrange,
-                            onTap: () {},
+
+                            // ===== FIXED: real scan page navigation =====
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ScanPage()),
+                            ),
+
                             index: 1),
                         _actionCard(
                             label: 'Type',
                             icon: Icons.edit,
                             color: Colors.purple,
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TypeReceiptPage())),
+                            onTap: () => Navigator.push(
+                                context, MaterialPageRoute(builder: (_) => const TypeReceiptPage())),
                             index: 2),
                       ],
                     ),
@@ -303,9 +309,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // Bottom navigation (flush with bottom)
             Container(
-              color: Colors.blue, // Set the color you want
+              color: Colors.blue,
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

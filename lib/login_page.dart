@@ -38,34 +38,16 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white, // cleaner background
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ===== App Intro with Google Fonts =====
-              Text(
-                "Smart Warranty Tracker helps you keep track of all your receipts and product warranties easily. Scan, import, or manually add your products to never lose warranty information again!",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.black87,
-                  height: 1.5,
-                  fontWeight: FontWeight.w400,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-
-              // ===== Logo =====
-              const Icon(
-                Icons.lock_outline,
-                size: 80,
-                color: Colors.blueAccent,
-              ),
-              const SizedBox(height: 16),
+              // ===== App Logo =====
+              const FlutterLogo(size: 100),
+              const SizedBox(height: 24),
 
               // ===== Welcome Text =====
               Text(
@@ -78,10 +60,10 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Login to your account",
+                "Login to continue",
                 style: GoogleFonts.roboto(
                   fontSize: 16,
-                  color: Colors.black54,
+                  color: Colors.grey[600],
                 ),
               ),
               const SizedBox(height: 32),
@@ -90,13 +72,13 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -116,13 +98,13 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -132,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     labelText: "Password",
-                    icon: const Icon(Icons.lock_outline),
+                    // removed lock icon for cleaner look
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,

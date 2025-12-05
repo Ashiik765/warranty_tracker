@@ -43,10 +43,11 @@ class _ScanPageState extends State<ScanPage> {
     productName = null;
     expiryDate = null;
 
+    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+
     try {
       final inputImage = InputImage.fromFile(image!);
-      final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-      final RecognizedText textData = await recognizer.processImage(inputImage);
+      final textData = await recognizer.processImage(inputImage);
 
       for (final block in textData.blocks) {
         final text = block.text.toLowerCase();
@@ -75,6 +76,8 @@ class _ScanPageState extends State<ScanPage> {
       }
     } catch (e) {
       print("OCR ERROR: $e");
+    } finally {
+      recognizer.close(); // 🔥 IMPORTANT — Prevent memory leak
     }
 
     if (productName != null || expiryDate != null) {
@@ -121,12 +124,12 @@ class _ScanPageState extends State<ScanPage> {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
-        .collection('receipts')        // FIXED COLLECTION NAME
+        .collection('receipts') // Correct collection
         .add({
       'productName': productName,
       'expiryDate': expiryDate,
       'category': category,
-      'uploadType': 'Scanned',        // ADDED FIELD
+      'uploadType': 'Scanned',
       'timestamp': FieldValue.serverTimestamp(),
     });
 
@@ -165,12 +168,14 @@ class _ScanPageState extends State<ScanPage> {
               if (productName != null)
                 Text(
                   "Product: $productName",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               if (expiryDate != null)
                 Text(
                   "Expiry: $expiryDate",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               const SizedBox(height: 20),
             ]
@@ -230,7 +235,8 @@ class _ScanPageState extends State<ScanPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF395EB6),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 14, horizontal: 20),
               ),
             ),
           ],

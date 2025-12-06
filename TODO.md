@@ -1,0 +1,10 @@
+- [ ] Fix pubspec.yaml: Correct name to "warranty_tracker" and remove duplicate flutter_launcher_icons
+- [ ] Add missing import for CircularProgressIndicator in lib/editprofile_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/electronic_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/feedback_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/home_appliances_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/home_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/notification_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/others_page.dart
+- [ ] Add missing import for CircularProgressIndicator in lib/vehicle_page.dart
+- [ ] Run flutter analyze again to verify fixes

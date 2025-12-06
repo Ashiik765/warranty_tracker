@@ -25,7 +25,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
 
     try {
-      await FirebaseAuth.instance.currentUser!.updateDisplayName(_nameController.text.trim());
+      await FirebaseAuth.instance.currentUser!
+          .updateDisplayName(_nameController.text.trim());
       // Refresh user info
       await FirebaseAuth.instance.currentUser!.reload();
 
@@ -83,7 +84,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   backgroundColor: const Color(0xFF1D4AB4),
                 ),
                 child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(color: Colors.white)
                     : const Text("Submit"),
               ),
             ),

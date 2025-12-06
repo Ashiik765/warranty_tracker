@@ -28,7 +28,9 @@ class _HomePageState extends State<HomePage> {
         title: const Text("Confirm Logout"),
         content: const Text("Are you sure you want to logout?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -68,7 +70,8 @@ class _HomePageState extends State<HomePage> {
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressedIndex = index),
-      onTapUp: (_) => Future.delayed(const Duration(milliseconds: 120), () => setState(() => _pressedIndex = -1)),
+      onTapUp: (_) => Future.delayed(const Duration(milliseconds: 120),
+          () => setState(() => _pressedIndex = -1)),
       onTapCancel: () => setState(() => _pressedIndex = -1),
       onTap: onTap,
       child: AnimatedScale(
@@ -97,7 +100,8 @@ class _HomePageState extends State<HomePage> {
             children: [
               Icon(icon, color: Colors.white, size: 32),
               const SizedBox(height: 8),
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+              Text(label,
+                  style: const TextStyle(color: Colors.white, fontSize: 12)),
             ],
           ),
         ),
@@ -116,7 +120,9 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))
+        ],
       ),
       child: Row(
         children: [
@@ -135,11 +141,16 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(productName,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87)),
                 const SizedBox(height: 6),
-                Text("Category: $category", style: const TextStyle(color: Colors.black54)),
+                Text("Category: $category",
+                    style: const TextStyle(color: Colors.black54)),
                 const SizedBox(height: 6),
-                Text("Expiry: $expiry", style: const TextStyle(color: Colors.black54)),
+                Text("Expiry: $expiry",
+                    style: const TextStyle(color: Colors.black54)),
               ],
             ),
           ),
@@ -163,7 +174,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _bottomNavItem({required IconData icon, required String label, required bool active, required VoidCallback onTap}) {
+  Widget _bottomNavItem(
+      {required IconData icon,
+      required String label,
+      required bool active,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -171,7 +186,9 @@ class _HomePageState extends State<HomePage> {
         children: [
           Icon(icon, color: active ? Colors.white : Colors.white70),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 12)),
+          Text(label,
+              style: TextStyle(
+                  color: active ? Colors.white : Colors.white70, fontSize: 12)),
         ],
       ),
     );
@@ -184,13 +201,15 @@ class _HomePageState extends State<HomePage> {
     if (user == null) {
       Future.microtask(() {
         if (mounted) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const LoginPage()));
         }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final displayName = user.displayName ?? user.email?.split('@')[0] ?? 'Chief';
+    final displayName =
+        user.displayName ?? user.email?.split('@')[0] ?? 'Chief';
 
     return Scaffold(
       extendBody: true,
@@ -200,7 +219,8 @@ class _HomePageState extends State<HomePage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -216,12 +236,16 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.white.withOpacity(0.07),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.arrow_back, color: Colors.white),
+                            child: const Icon(Icons.arrow_back,
+                                color: Colors.white),
                           ),
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationPage()));
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const NotificationPage()));
                           },
                           child: Container(
                             padding: const EdgeInsets.all(8),
@@ -229,20 +253,29 @@ class _HomePageState extends State<HomePage> {
                               color: Colors.white.withOpacity(0.07),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.notifications_none, color: Colors.white),
+                            child: const Icon(Icons.notifications_none,
+                                color: Colors.white),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 28),
 
-                    Text('Welcome back,', style: TextStyle(fontSize: 30, color: Colors.white.withOpacity(0.9))),
+                    Text('Welcome back,',
+                        style: TextStyle(
+                            fontSize: 30,
+                            color: Colors.white.withOpacity(0.9))),
                     const SizedBox(height: 6),
                     Text(displayName,
-                        style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.w800)),
+                        style: const TextStyle(
+                            fontSize: 36,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800)),
                     const SizedBox(height: 8),
                     Text('Here are your latest receipts and shortcuts',
-                        style: TextStyle(fontSize: 17, color: Colors.white.withOpacity(0.9))),
+                        style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.white.withOpacity(0.9))),
                     const SizedBox(height: 26),
 
                     Row(
@@ -261,23 +294,29 @@ class _HomePageState extends State<HomePage> {
 
                             // ===== FIXED: real scan page navigation =====
                             onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ScanPage()),
-                            ),
-
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const ScanPage()),
+                                ),
                             index: 1),
                         _actionCard(
                             label: 'Type',
                             icon: Icons.edit,
                             color: Colors.purple,
                             onTap: () => Navigator.push(
-                                context, MaterialPageRoute(builder: (_) => const TypeReceiptPage())),
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const TypeReceiptPage())),
                             index: 2),
                       ],
                     ),
                     const SizedBox(height: 30),
 
-                    const Text('Recent', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Recent',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
 
                     StreamBuilder<QuerySnapshot>(
@@ -289,8 +328,11 @@ class _HomePageState extends State<HomePage> {
                           .limit(1)
                           .snapshots(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator(color: Colors.white));
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                              child: CircularProgressIndicator(
+                                  color: Colors.white));
                         }
 
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -308,24 +350,33 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
             Container(
               color: Colors.blue,
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _bottomNavItem(icon: Icons.home, label: 'Home', active: true, onTap: () {}),
+                  _bottomNavItem(
+                      icon: Icons.home,
+                      label: 'Home',
+                      active: true,
+                      onTap: () {}),
                   _bottomNavItem(
                       icon: Icons.shopping_bag,
                       label: 'Product',
                       active: false,
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductPage()))),
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const ProductPage()))),
                   _bottomNavItem(
                       icon: Icons.person,
                       label: 'User',
                       active: false,
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()))),
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const ProfilePage()))),
                 ],
               ),
             ),

@@ -4,28 +4,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'product_details_page.dart';
 
-class ElectronicsPage extends StatelessWidget {
+class ElectronicsPage extends StatefulWidget {
   const ElectronicsPage({super.key});
+
+  @override
+  State<ElectronicsPage> createState() => _ElectronicsPageState();
+}
+
+class _ElectronicsPageState extends State<ElectronicsPage> {
+  bool selectMode = false; // Toggle for selection mode
+  Set<String> selectedProducts = {}; // Track selected doc IDs
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    // 🔥 Prevent crash if user is null
     if (user == null) {
       return const Scaffold(
-        body: Center(
-          child: Text("User not signed in"),
-        ),
+        body: Center(child: Text("User not signed in")),
       );
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFEAEAEA),
-
       body: Column(
         children: [
-          // ---------------- TOP HEADER ----------------
+          // 🔹 Custom Top Bar
           Container(
             height: 101,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -45,12 +49,25 @@ class ElectronicsPage extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const Spacer(),
+                // Top-right selection toggle
+                IconButton(
+                  icon: Icon(selectMode ? Icons.close : Icons.check_box),
+                  onPressed: () {
+                    setState(() {
+                      selectMode = !selectMode;
+                      selectedProducts.clear();
+                    });
+                  },
+                  color: Colors.white,
+                ),
               ],
             ),
           ),
+
           const SizedBox(height: 16),
 
-          // ---------------- RECEIPT LIST ----------------
+          // 🔹 List of Electronics products
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -58,91 +75,204 @@ class ElectronicsPage extends StatelessWidget {
                   .doc(user.uid)
                   .collection('receipts')
                   .where('category', isEqualTo: 'Electronics')
-                  .orderBy('timestamp', descending: true)
                   .snapshots(),
-
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No products found."));
+                  return const Center(child: Text("No Electronics products found."));
                 }
 
                 final docs = snapshot.data!.docs;
 
-                return ListView.builder(
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final data = docs[index].data() as Map<String, dynamic>;
+                // Filter expired products
+                final filteredDocs = docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final expiry = data['expiryDate'];
+                  if (expiry == null) return true;
+                  try {
+                    final expiryDate = DateFormat('yyyy-MM-dd').parse(expiry);
+                    return expiryDate.isAfter(DateTime.now());
+                  } catch (_) {
+                    return true;
+                  }
+                }).toList();
 
-                    // Safe timestamp
-                    final timestamp = data['timestamp'];
-                    DateTime addedDate = DateTime.now();
-                    if (timestamp is Timestamp) {
-                      addedDate = timestamp.toDate();
-                    }
+                if (filteredDocs.isEmpty) {
+                  return const Center(child: Text("No active Electronics products."));
+                }
 
-                    String formattedAddedDate =
-                        DateFormat('yyyy-MM-dd h:mm a').format(addedDate);
+                return Stack(
+                  children: [
+                    ListView.builder(
+                      key: const PageStorageKey('electronics_list'),
+                      itemCount: filteredDocs.length,
+                      itemBuilder: (context, index) {
+                        final data = filteredDocs[index].data() as Map<String, dynamic>;
+                        final docId = filteredDocs[index].id;
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: ListTile(
-                        leading: const Icon(Icons.devices_other, size: 40),
+                        final Timestamp? ts = data['timestamp'];
+                        final addedDate = ts != null ? ts.toDate() : DateTime.now();
+                        final formattedAddedDate =
+                            DateFormat('yyyy-MM-dd h:mm a').format(addedDate);
 
-                        title: Text(
-                          data['productName'] ?? 'Unknown Product',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        bool isSelected = selectedProducts.contains(docId);
 
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: ListTile(
+                            leading: selectMode
+                                ? Checkbox(
+                                    value: isSelected,
+                                    onChanged: (checked) {
+                                      setState(() {
+                                        if (checked == true) {
+                                          selectedProducts.add(docId);
+                                        } else {
+                                          selectedProducts.remove(docId);
+                                        }
+                                      });
+                                    },
+                                  )
+                                : const Icon(Icons.devices_other, size: 40, color: Colors.blue),
+                            title: Text(
+                              data['productName'] ?? 'Unknown Product',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Expiry Date: ${data['expiryDate'] ?? 'Not set'}"),
+                                Text("Added On: $formattedAddedDate"),
+                              ],
+                            ),
+                            onTap: () {
+                              if (!selectMode) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ProductDetailsPage(
+                                      productName: data['productName'] ?? '',
+                                      expiryDate: data['expiryDate'] ?? '',
+                                      category: 'Electronics',
+                                      importDate: addedDate,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                setState(() {
+                                  if (isSelected) {
+                                    selectedProducts.remove(docId);
+                                  } else {
+                                    selectedProducts.add(docId);
+                                  }
+                                });
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Bottom delete + cancel bar
+                    if (selectMode && selectedProducts.isNotEmpty)
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Row(
                           children: [
-                            Text("Expiry Date: ${data['expiryDate'] ?? 'Not set'}"),
-                            Text("Added On: $formattedAddedDate"),
-                          ],
-                        ),
-
-                        // ----------------- OPEN DETAILS PAGE -----------------
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailsPage(
-                                productName: data['productName'] ?? '',
-                                expiryDate: data['expiryDate'] ?? '',
-                                category: 'Electronics',
-                                importDate: addedDate,
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.delete),
+                                label: Text("Delete (${selectedProducts.length}) Selected"),
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 14)),
+                                onPressed: _confirmDeleteSelected,
                               ),
                             ),
-                          );
-                        },
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                child: const Text("Cancel"),
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.grey,
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 14)),
+                                onPressed: () {
+                                  setState(() {
+                                    selectMode = false;
+                                    selectedProducts.clear();
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                  ],
                 );
               },
             ),
           ),
         ],
       ),
+    );
+  }
 
-      // ---------------- BOTTOM NAVIGATION ----------------
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (index) {
-          if (index == 0) Navigator.pop(context); 
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Products'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'User'),
+  // Confirm deletion dialog
+  void _confirmDeleteSelected() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Selected Electronics"),
+        content: Text(
+            "Are you sure you want to delete ${selectedProducts.length} product(s)?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Delete")),
         ],
       ),
     );
+
+    if (confirm == true) {
+      _deleteSelectedProducts();
+    }
+  }
+
+  Future<void> _deleteSelectedProducts() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final batch = FirebaseFirestore.instance.batch();
+    for (String docId in selectedProducts) {
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('receipts')
+          .doc(docId);
+      batch.delete(docRef);
+    }
+
+    try {
+      await batch.commit();
+      setState(() {
+        selectedProducts.clear();
+        selectMode = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Selected products deleted successfully.")));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to delete products: $e")));
+    }
   }
 }

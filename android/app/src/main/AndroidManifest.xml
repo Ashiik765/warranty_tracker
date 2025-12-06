@@ -1,26 +1,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.waranty_tracker">
 
-    <!-- Required for Firebase & Internet -->
+    <!-- Internet for Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Camera for OCR -->
+    <!-- Camera -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Storage (handled safely for all Android versions) -->
+    <!-- Storage Permissions -->
+    <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Below Android 13 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Notification (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-
-
     <application
         android:name="${applicationName}"
         android:label="waranty_tracker"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- ML Kit Dependency (VERY IMPORTANT) -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCY"
+            android:value="text_recognition" />
 
         <activity
             android:name=".MainActivity"
@@ -47,10 +53,10 @@
 
     </application>
 
+    <!-- Required for camera capture intents -->
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT" />
-            <data android:mimeType="text/plain" />
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
     </queries>
 

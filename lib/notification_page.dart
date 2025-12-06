@@ -60,7 +60,9 @@ class NotificationPage extends StatelessWidget {
         children: [
           Icon(icon, color: active ? Colors.white : Colors.white70),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 12)),
+          Text(label,
+              style: TextStyle(
+                  color: active ? Colors.white : Colors.white70, fontSize: 12)),
         ],
       ),
     );
@@ -116,11 +118,12 @@ class NotificationPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No notifications available."));
+                  return const Center(
+                      child: Text("No notifications available."));
                 }
 
                 final docs = snapshot.data!.docs;
@@ -145,11 +148,14 @@ class NotificationPage extends StatelessWidget {
 
                 // 🔹 Build Notification Cards
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: notifications.length,
                   itemBuilder: (context, index) {
-                    final data = notifications[index].data() as Map<String, dynamic>;
-                    final expiry = DateFormat('yyyy-MM-dd').parse(data['expiryDate']);
+                    final data =
+                        notifications[index].data() as Map<String, dynamic>;
+                    final expiry =
+                        DateFormat('yyyy-MM-dd').parse(data['expiryDate']);
                     final daysLeft = expiry.difference(DateTime.now()).inDays;
 
                     return Card(

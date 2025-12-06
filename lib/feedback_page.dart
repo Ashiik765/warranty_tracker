@@ -82,7 +82,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   backgroundColor: const Color(0xFF1D4AB4),
                 ),
                 child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? CircularProgressIndicator(color: Colors.white)
                     : const Text("Submit"),
               ),
             ),

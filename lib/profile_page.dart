@@ -22,6 +22,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String? photoUrl;
   final String defaultImage = 'images/common.jpg';
+  File? _image;
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  // ================= Pick & Upload Image ==================
   Future<void> _pickAndUploadImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -52,18 +54,29 @@ class _ProfilePageState extends State<ProfilePage> {
     if (pickedFile == null) return;
 
     final file = File(pickedFile.path);
+
+    setState(() {
+      _image = file; // Show local preview immediately
+    });
+
     try {
       final storageRef =
           FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
+
+      // 1️⃣ Upload file first
       await storageRef.putFile(file);
+
+      // 2️⃣ Get download URL after upload
       final downloadUrl = await storageRef.getDownloadURL();
+
+      // 3️⃣ Save download URL to Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .set({'photoUrl': downloadUrl}, SetOptions(merge: true));
 
       setState(() {
-        photoUrl = downloadUrl;
+        photoUrl = downloadUrl; // Update UI with uploaded image
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,6 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // ================= Remove Image ==================
   Future<void> _removeImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -82,8 +96,11 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final storageRef =
           FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
+
+      // Delete file in storage (ignore error if not exist)
       await storageRef.delete().catchError((_) {});
 
+      // Remove photoUrl in Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -91,6 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       setState(() {
         photoUrl = null;
+        _image = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -237,9 +255,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: CircleAvatar(
                       radius: 55,
                       backgroundColor: Colors.grey[300],
-                      backgroundImage: photoUrl != null
-                          ? NetworkImage(photoUrl!)
-                          : AssetImage(defaultImage) as ImageProvider,
+                      backgroundImage: _image != null
+                          ? FileImage(_image!)
+                          : (photoUrl != null
+                              ? NetworkImage(photoUrl!) as ImageProvider
+                              : AssetImage(defaultImage) as ImageProvider),
                     ),
                   ),
                   const SizedBox(width: 18),

@@ -90,3 +90,6 @@ flutter:
     - images/vehicle.png
     - images/others.png
     - assets/icons/logo.png
+    - assets/intro.png
+    - assets/OIP.webp
+

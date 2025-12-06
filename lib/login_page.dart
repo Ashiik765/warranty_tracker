@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_fonts/google_fonts.dart'; 
+import 'package:google_fonts/google_fonts.dart';
+
 import 'home_page.dart';
 import 'signup_page.dart';
 import 'forgotpass_page.dart';
+import 'intro_page.dart'; // <-- IMPORTANT
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,18 +40,38 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // cleaner background
+      backgroundColor: Colors.white,
+
+      // ====== BACK ARROW ======
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const IntroPage()),
+            );
+          },
+        ),
+      ),
+
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ===== App Logo =====
-              const FlutterLogo(size: 100),
+              
+              // ===== LOGIN IMAGE =====
+              Image.asset(
+                "assets/OTP.webp",
+                height: 120,
+              ),
               const SizedBox(height: 24),
 
-              // ===== Welcome Text =====
+              // ===== WELCOME TEXT =====
               Text(
                 "Welcome Back!",
                 style: GoogleFonts.roboto(
@@ -68,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 32),
 
-              // ===== Email Field =====
+              // ===== EMAIL FIELD =====
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
@@ -94,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 16),
 
-              // ===== Password Field =====
+              // ===== PASSWORD FIELD =====
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
@@ -114,7 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     labelText: "Password",
-                    // removed lock icon for cleaner look
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -128,16 +149,18 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 10),
 
-              // ===== Forgot Password =====
+              // ===== FORGOT PASSWORD =====
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage()),
                     );
                   },
                   child: const Text(
@@ -146,9 +169,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 10),
 
-              // ===== Login Button =====
+              // ===== LOGIN BUTTON =====
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -169,9 +193,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 12),
 
-              // ===== Sign Up Link =====
+              // ===== SIGNUP LINK =====
               TextButton(
                 onPressed: () {
                   Navigator.push(

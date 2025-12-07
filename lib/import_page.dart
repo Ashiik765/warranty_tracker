@@ -4,8 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';               // for text extraction
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';  // for PDF preview
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:intl/intl.dart';
 
 class ImportPage extends StatefulWidget {
@@ -31,6 +31,7 @@ class _ImportPageState extends State<ImportPage> {
     super.dispose();
   }
 
+  // Pick file
   Future<void> pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -64,6 +65,7 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  // Extract PDF text
   Future<void> extractTextFromPdf(File file) async {
     try {
       final bytes = await file.readAsBytes();
@@ -81,6 +83,7 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  // Extract Image text
   Future<void> extractTextFromImage(File file) async {
     TextRecognizer? recognizer;
     try {
@@ -99,6 +102,7 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  // Autofill product name and expiry
   void autoFillFields(String text) {
     bool foundProduct = false;
     bool foundDate = false;
@@ -127,6 +131,7 @@ class _ImportPageState extends State<ImportPage> {
     });
   }
 
+  // Pick expiry date manually
   Future<void> selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -142,6 +147,7 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  // Save to Firebase
   Future<void> saveToFirebase() async {
     if (productController.text.trim().isEmpty || selectedDate == null || category == null) {
       showError("Please fill all fields");
@@ -212,22 +218,20 @@ class _ImportPageState extends State<ImportPage> {
                 ),
               ),
             )
-          : Row(
-              children: [
-                // LEFT: preview
-                Expanded(
-                  flex: 4,
-                  child: Container(
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Preview container
+                  Container(
+                    height: 300,
                     color: Colors.grey.shade200,
                     child: selectedFile!.path.toLowerCase().endsWith('.pdf')
                         ? SfPdfViewer.file(selectedFile!)
                         : Image.file(selectedFile!, fit: BoxFit.contain),
                   ),
-                ),
-                // RIGHT: form
-                Expanded(
-                  flex: 5,
-                  child: SingleChildScrollView(
+                  const SizedBox(height: 16),
+                  Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +249,7 @@ class _ImportPageState extends State<ImportPage> {
                               style: TextStyle(color: Colors.orange),
                             ),
                           ),
-
+                        // Product Name
                         TextField(
                           controller: productController,
                           decoration: const InputDecoration(
@@ -254,7 +258,7 @@ class _ImportPageState extends State<ImportPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
+                        // Expiry Date
                         TextField(
                           controller: expiryController,
                           readOnly: true,
@@ -268,7 +272,7 @@ class _ImportPageState extends State<ImportPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
+                        // Category
                         DropdownButtonFormField<String>(
                           value: category,
                           decoration: const InputDecoration(
@@ -284,7 +288,6 @@ class _ImportPageState extends State<ImportPage> {
                           onChanged: (v) => setState(() => category = v),
                         ),
                         const SizedBox(height: 20),
-
                         ElevatedButton.icon(
                           icon: const Icon(Icons.save),
                           label: const Text("Save Receipt"),
@@ -294,9 +297,7 @@ class _ImportPageState extends State<ImportPage> {
                             padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                           ),
                         ),
-
                         const SizedBox(height: 20),
-
                         if (extractedText != null) ...[
                           const Divider(),
                           const Text("Detected text preview:", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -313,8 +314,8 @@ class _ImportPageState extends State<ImportPage> {
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }

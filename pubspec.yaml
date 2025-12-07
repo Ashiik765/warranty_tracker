@@ -66,6 +66,8 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^31.2.16
   syncfusion_flutter_pdf: ^31.2.16
 
+  shared_preferences: ^2.1.1
+
 
 
 

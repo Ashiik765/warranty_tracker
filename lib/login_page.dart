@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'home_page.dart';
 import 'signup_page.dart';
 import 'forgotpass_page.dart';
-import 'intro_page.dart'; // <-- IMPORTANT
+import 'intro_page.dart';
+import 'home_page.dart'; // <-- import your home page
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -18,22 +18,50 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _showPassword = false;
+  bool _isLoading = false;
 
+  // ===== LOGIN FUNCTION =====
   void login() async {
+    setState(() {
+      _isLoading = true; // show loading indicator
+    });
+
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+      // ===== NAVIGATE IMMEDIATELY TO HOME =====
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Login successful")),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Login failed";
+      if (e.code == 'user-not-found') {
+        message = "No user found for this email.";
+      } else if (e.code == 'wrong-password') {
+        message = "Incorrect password.";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login failed: ${e.toString()}")),
       );
+    } finally {
+      setState(() {
+        _isLoading = false; // hide loading indicator
+      });
     }
   }
 
@@ -41,8 +69,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // ====== BACK ARROW ======
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -56,22 +82,20 @@ class _LoginPageState extends State<LoginPage> {
           },
         ),
       ),
-
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              
-              // ===== LOGIN IMAGE =====
-              Image.asset(
-                "assets/OTP.webp",
-                height: 120,
+              // ===== ICON INSTEAD OF IMAGE =====
+              const Icon(
+                Icons.verified_user,
+                size: 100,
+                color: Colors.blueAccent,
               ),
               const SizedBox(height: 24),
 
-              // ===== WELCOME TEXT =====
               Text(
                 "Welcome Back!",
                 style: GoogleFonts.roboto(
@@ -96,11 +120,11 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -122,11 +146,11 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -149,7 +173,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
 
               // ===== FORGOT PASSWORD =====
@@ -159,8 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const ForgotPasswordPage()),
+                      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
                     );
                   },
                   child: const Text(
@@ -169,14 +191,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 10),
 
               // ===== LOGIN BUTTON =====
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: login,
+                  onPressed: _isLoading ? null : login,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -184,16 +205,21 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     backgroundColor: Colors.blueAccent,
                   ),
-                  child: Text(
-                    "Login",
-                    style: GoogleFonts.roboto(
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          "Login",
+                          style: GoogleFonts.roboto(
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
-
               const SizedBox(height: 12),
 
               // ===== SIGNUP LINK =====

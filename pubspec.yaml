@@ -1,4 +1,4 @@
-name: waranty_tracker
+name: warranty_tracker
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -35,32 +35,38 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Firebase (compatible set)
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.2
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
+  firebase_storage: ^13.0.4
 
   # OCR (correct versions)
-  google_mlkit_text_recognition: 0.14.0
-  google_mlkit_commons: ^0.9.0
+  google_mlkit_text_recognition: ^0.15.0
+  google_mlkit_commons: ^0.11.0
 
-  permission_handler: ^10.4.0
+  permission_handler: ^12.0.1
 
   # File & images
-  file_picker: ^8.0.0
+  file_picker: ^10.3.7
   image_picker: ^1.2.0
 
   # PDF
-  syncfusion_flutter_pdf: ^24.1.24
+  
   intl: ^0.20.2
 
   # File handling
   path_provider: ^2.0.15
   path: ^1.8.0
 
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
   google_fonts: ^6.1.0
+
+  
+  syncfusion_flutter_pdfviewer: ^31.2.16
+  syncfusion_flutter_pdf: ^31.2.16
+
+
 
 
 dev_dependencies:

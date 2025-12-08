@@ -50,6 +50,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="warranty_channel" />
+
+        <meta-data
+            android:name="flutterLocalNotificationsPlugin.notification_channel_id"
+            android:value="warranty_channel" />
+
+
 
     </application>
 

@@ -9,7 +9,7 @@ import 'type_receipt.dart';
 import 'product_page.dart';
 import 'profile_page.dart';
 import 'notification_page.dart';
-import 'scan_page.dart'; // <-- Add your scan page here
+import 'scan_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -109,76 +109,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ========= FIXED: Removed blinking animation =========
-  Widget _recentCard(Map<String, dynamic>? data) {
-    final productName = data?['productName'] ?? 'No receipts yet';
-    final category = data?['category'] ?? '-';
-    final expiry = data?['expiryDate'] ?? '-';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(child: _categoryIcon(data?['category'])),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(productName,
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-                const SizedBox(height: 6),
-                Text("Category: $category",
-                    style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 6),
-                Text("Expiry: $expiry",
-                    style: const TextStyle(color: Colors.black54)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryIcon(dynamic category) {
-    final cat = (category ?? "").toString().toLowerCase();
-    if (cat.contains('elect')) {
-      return const Icon(Icons.electrical_services, color: Colors.blue);
-    } else if (cat.contains('home')) {
-      return const Icon(Icons.kitchen, color: Colors.orange);
-    } else if (cat.contains('veh') || cat.contains('car')) {
-      return const Icon(Icons.directions_car, color: Colors.green);
-    } else if (cat == '-' || cat.isEmpty) {
-      return const Icon(Icons.receipt_long, color: Colors.black54);
-    } else {
-      return const Icon(Icons.category, color: Colors.purple);
-    }
-  }
-
-  Widget _bottomNavItem(
-      {required IconData icon,
-      required String label,
-      required bool active,
-      required VoidCallback onTap}) {
+  Widget _bottomNavItem({
+    required IconData icon,
+    required String label,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -240,27 +176,90 @@ class _HomePageState extends State<HomePage> {
                                 color: Colors.white),
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const NotificationPage()));
+
+                        // 🔔 Notification Icon with Badge
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .collection('receipts')
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            int count = 0;
+                            if (snapshot.hasData) {
+                              final docs = snapshot.data!.docs;
+                              final today = DateTime.now();
+                              count = docs.where((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                final expiryStr = data['expiryDate'];
+                                if (expiryStr == null) return false;
+                                try {
+                                  final expiry = DateTime.parse(expiryStr);
+                                  final daysLeft =
+                                      expiry.difference(today).inDays;
+                                  return daysLeft <= 10 && daysLeft >= 0;
+                                } catch (e) {
+                                  return false;
+                                }
+                              }).length;
+                            }
+
+                            String badgeText = count > 99 ? '99+' : '$count';
+
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const NotificationPage()));
+                              },
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.07),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.notifications_none,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (count > 0)
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
+                                        child: Text(
+                                          badgeText,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
                           },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.07),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.notifications_none,
-                                color: Colors.white),
-                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 28),
-
                     Text('Welcome back,',
                         style: TextStyle(
                             fontSize: 30,
@@ -291,8 +290,6 @@ class _HomePageState extends State<HomePage> {
                             label: 'Scan',
                             icon: Icons.qr_code_scanner,
                             color: Colors.deepOrange,
-
-                            // ===== FIXED: real scan page navigation =====
                             onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -311,7 +308,6 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 30),
-
                     const Text('Recent',
                         style: TextStyle(
                             color: Colors.white,
@@ -331,18 +327,18 @@ class _HomePageState extends State<HomePage> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return Center(
-                              child: CircularProgressIndicator(
-                                  color: Colors.white));
+                              child:
+                                  CircularProgressIndicator(color: Colors.white));
                         }
 
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return _recentCard(null);
+                          return const RecentReceiptCard(data: null);
                         }
 
                         final doc = snapshot.data!.docs.first;
                         final data = doc.data() as Map<String, dynamic>?;
 
-                        return _recentCard(data);
+                        return RecentReceiptCard(data: data);
                       },
                     ),
                     const SizedBox(height: 20),
@@ -382,6 +378,77 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ===== Separate stateless widget for recent receipt =====
+class RecentReceiptCard extends StatelessWidget {
+  final Map<String, dynamic>? data;
+  const RecentReceiptCard({Key? key, this.data}) : super(key: key);
+
+  Widget _categoryIcon(dynamic category) {
+    final cat = (category ?? "").toString().toLowerCase();
+    if (cat.contains('elect')) {
+      return const Icon(Icons.electrical_services, color: Colors.blue);
+    } else if (cat.contains('home')) {
+      return const Icon(Icons.kitchen, color: Colors.orange);
+    } else if (cat.contains('veh') || cat.contains('car')) {
+      return const Icon(Icons.directions_car, color: Colors.green);
+    } else if (cat == '-' || cat.isEmpty) {
+      return const Icon(Icons.receipt_long, color: Colors.black54);
+    } else {
+      return const Icon(Icons.category, color: Colors.purple);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final productName = data?['productName'] ?? 'No receipts yet';
+    final category = data?['category'] ?? '-';
+    final expiry = data?['expiryDate'] ?? '-';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, color: Colors.black26, offset: Offset(0, 4))
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(child: _categoryIcon(data?['category'])),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(productName,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87)),
+                const SizedBox(height: 6),
+                Text("Category: $category",
+                    style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 6),
+                Text("Expiry: $expiry",
+                    style: const TextStyle(color: Colors.black54)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

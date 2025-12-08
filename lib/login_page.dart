@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'signup_page.dart';
 import 'forgotpass_page.dart';
 import 'intro_page.dart';
-import 'home_page.dart'; // <-- import your home page
+import 'home_page.dart'; // <-- make sure you have your HomePage
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   // ===== LOGIN FUNCTION =====
   void login() async {
     setState(() {
-      _isLoading = true; // show loading indicator
+      _isLoading = true;
     });
 
     try {
@@ -32,13 +32,12 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text.trim(),
       );
 
-      // ===== NAVIGATE IMMEDIATELY TO HOME =====
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      }
+      // Navigate to HomePage immediately after login
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login successful")),
@@ -60,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } finally {
       setState(() {
-        _isLoading = false; // hide loading indicator
+        _isLoading = false;
       });
     }
   }

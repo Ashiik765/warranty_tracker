@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'notification_service.dart'; // <-- IMPORTANT (Make sure this file exists)
+
 class TypeReceiptPage extends StatefulWidget {
   const TypeReceiptPage({super.key});
 
@@ -18,7 +20,7 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
     'Electronics',
     'Home Appliances',
     'Vehicle',
-    'others',
+    'Others',
   ];
 
   void pickDate() async {
@@ -51,7 +53,8 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
     if (user == null) return;
 
     try {
-      await FirebaseFirestore.instance
+      // SAVE TO FIRESTORE
+      final docRef = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('receipts')
@@ -63,11 +66,36 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
+      String receiptId = docRef.id;
+
+      // -----------------------------
+      // 📌 TEST NOTIFICATIONS
+      // -----------------------------
+      final now = DateTime.now();
+
+      NotificationService.scheduleNotification(
+        id: receiptId.hashCode,
+        title: "Test Notification",
+        body: "$product warranty test!",
+        scheduledTime: now.add(const Duration(seconds: 10)), // 10 sec later
+      );
+
+      NotificationService.scheduleNotification(
+        id: receiptId.hashCode + 1,
+        title: "Second Test Notification",
+        body: "$product warranty second test!",
+        scheduledTime: now.add(const Duration(seconds: 20)), // 20 sec later
+      );
+
+      print("Test notifications scheduled for 10s and 20s later.");
+
+      // -----------------------------
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Receipt Saved Successfully')),
       );
 
       Navigator.pop(context);
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Error saving receipt: $e')),
@@ -92,12 +120,11 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
               ),
             ),
           ),
-          // Wrap the title in Padding to add top padding
           title: const Padding(
-            padding: EdgeInsets.only(top: 20), // Top padding added here
+            padding: EdgeInsets.only(top: 20),
             child: Text(
               "Type Receipt",
-              style : TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -137,13 +164,10 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
               ),
               const SizedBox(height: 35),
 
-              // ---------------- PRODUCT NAME ----------------
+              // PRODUCT NAME
               const Text(
                 "Product Name",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
 
@@ -160,13 +184,10 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
               const SizedBox(height: 25),
 
-              // ---------------- EXPIRY DATE ----------------
+              // EXPIRY DATE
               const Text(
                 "Expiry Date",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
 
@@ -192,13 +213,10 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
               const SizedBox(height: 25),
 
-              // ---------------- CATEGORY ----------------
+              // CATEGORY
               const Text(
                 "Category",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
 
@@ -215,21 +233,20 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
                     value: category,
                     child: Text(
                       category,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   );
                 }).toList(),
-                onChanged: (newValue) {
+                onChanged: (val) {
                   setState(() {
-                    selectedCategory = newValue;
+                    selectedCategory = val;
                   });
                 },
               ),
 
               const SizedBox(height: 35),
 
-              // ---------------- SAVE BUTTON ----------------
+              // SAVE BUTTON
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

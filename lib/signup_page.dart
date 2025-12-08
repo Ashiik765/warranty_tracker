@@ -14,11 +14,12 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  bool _isPasswordVisible = false; // for password visibility toggle
-  bool _isConfirmPasswordVisible = false; // for confirm password toggle
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  bool _isLoading = false;
 
+  // ===== SIGNUP FUNCTION =====
   void signUpUser() async {
-    // check if both passwords match first
     if (passwordController.text.trim() != confirmPasswordController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match. Please try again.")),
@@ -26,20 +27,45 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
+      // Navigate to HomePage immediately after signup
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Signup successful")),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Signup failed";
+      if (e.code == 'email-already-in-use') {
+        message = "This email is already registered.";
+      } else if (e.code == 'weak-password') {
+        message = "Password is too weak. Use at least 6 characters.";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signup Failed: ${e.toString()}")),
+        SnackBar(content: Text("Signup failed: ${e.toString()}")),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -72,7 +98,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
                   ],
                 ),
@@ -94,7 +120,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
                   ],
                 ),
@@ -126,7 +152,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
                   ],
                 ),
@@ -139,9 +165,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     icon: const Icon(Icons.lock_person_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isConfirmPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -158,7 +182,7 @@ class _SignUpPageState extends State<SignUpPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: signUpUser,
+                  onPressed: _isLoading ? null : signUpUser,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -166,10 +190,16 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     backgroundColor: Colors.green,
                   ),
-                  child: const Text(
-                    "Sign Up",
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          "Sign Up",
+                          style: TextStyle(fontSize: 18),
+                        ),
                 ),
               ),
               const SizedBox(height: 12),

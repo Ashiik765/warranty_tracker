@@ -4,18 +4,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
+import 'product_page.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
 
-  // 🔹 Determine if the product is expiring soon (within 10 days)
+  // 🔹 Determine if the product is expiring within 10 days
   bool shouldNotify(DateTime expiry) {
     final today = DateTime.now();
     final daysLeft = expiry.difference(today).inDays;
     return daysLeft <= 10 && daysLeft >= 0;
   }
 
-  // 🔹 Pick an image based on the category (from assets)
+  // 🔹 Category Icon
   Widget getCategoryIcon(String? category) {
     String path;
 
@@ -24,13 +25,10 @@ class NotificationPage extends StatelessWidget {
         path = 'images/electronics.png';
         break;
       case 'vehicle':
-        path = 'assets/images/vehicle.png';
+        path = 'images/vehicle.png';
         break;
       case 'home appliances':
         path = 'images/home_appliances.png';
-        break;
-      case 'others':
-        path = 'images/others.png';
         break;
       default:
         path = 'images/default.png';
@@ -80,6 +78,7 @@ class NotificationPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFEAEAEA),
+
       body: Column(
         children: [
           // 🔹 Top Header
@@ -108,7 +107,7 @@ class NotificationPage extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // 🔹 Notifications Stream (Live Updates)
+          // 🔹 Notifications Live Stream
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -118,17 +117,16 @@ class NotificationPage extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                      child: Text("No notifications available."));
+                  return const Center(child: Text("No notifications available."));
                 }
 
                 final docs = snapshot.data!.docs;
 
-                // 🔹 Filter items within 10 days of expiry
+                // 🔹 Filter: Expiring within 10 days
                 final notifications = docs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
                   final expiryStr = data['expiryDate'];
@@ -146,7 +144,7 @@ class NotificationPage extends StatelessWidget {
                   return const Center(child: Text("No notifications today."));
                 }
 
-                // 🔹 Build Notification Cards
+                // 🔹 Notification Cards
                 return ListView.builder(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -169,11 +167,9 @@ class NotificationPage extends StatelessWidget {
                         padding: const EdgeInsets.all(12.0),
                         child: Row(
                           children: [
-                            // 🖼 Category Image
                             getCategoryIcon(data['category']),
                             const SizedBox(width: 15),
 
-                            // 📋 Product Info
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,12 +204,13 @@ class NotificationPage extends StatelessWidget {
         ],
       ),
 
-      // 🔹 Custom Bottom Navigation Bar (like HomePage)
+      // 🔹 Bottom Navigation
       bottomNavigationBar: Container(
         margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: const Color(0xFF1D4AB4),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
@@ -222,6 +219,7 @@ class NotificationPage extends StatelessWidget {
             ),
           ],
         ),
+
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -236,12 +234,19 @@ class NotificationPage extends StatelessWidget {
                 );
               },
             ),
+
             _bottomNavItem(
               icon: Icons.notifications,
-              label: 'Notifications',
+              label: 'Products',
               active: true,
-              onTap: () {},
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProductPage()),
+                );
+              },
             ),
+
             _bottomNavItem(
               icon: Icons.person,
               label: 'User',
@@ -259,3 +264,4 @@ class NotificationPage extends StatelessWidget {
     );
   }
 }
+

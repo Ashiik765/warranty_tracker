@@ -12,6 +12,11 @@ android {
     compileSdk = 36
     ndkVersion flutter.ndkVersion
 
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
     defaultConfig {
         applicationId "com.example.waranty_tracker"
         minSdkVersion flutter.minSdkVersion

@@ -1,7 +1,6 @@
 // lib/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'login_page.dart';
@@ -10,6 +9,7 @@ import 'product_page.dart';
 import 'profile_page.dart';
 import 'notification_page.dart';
 import 'scan_page.dart';
+import 'import_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -50,13 +50,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void openGallery() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Selected image: ${image.name}")),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ImportPage()),
+    );
   }
 
   Widget _actionCard({
@@ -327,8 +324,8 @@ class _HomePageState extends State<HomePage> {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return Center(
-                              child:
-                                  CircularProgressIndicator(color: Colors.white));
+                              child: CircularProgressIndicator(
+                                  color: Colors.white));
                         }
 
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {

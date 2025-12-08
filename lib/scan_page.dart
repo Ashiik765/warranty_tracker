@@ -5,7 +5,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'notification_service.dart'; // <-- ADD THIS
+import 'notification_service.dart';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -15,10 +15,13 @@ class ScanPage extends StatefulWidget {
 }
 
 class _ScanPageState extends State<ScanPage> {
+  // -------------------- Controllers --------------------
+  final TextEditingController productController = TextEditingController();
+  final TextEditingController expiryController = TextEditingController();
+
+  // -------------------- State variables --------------------
   File? image;
   String? extractedText;
-  String? productName;
-  String? expiryDate;
   String? category;
   DateTime? selectedExpiry;
 
@@ -40,8 +43,8 @@ class _ScanPageState extends State<ScanPage> {
       ocrSuccess = false;
       noDetailsFound = false;
       extractedText = null;
-      productName = null;
-      expiryDate = null;
+      productController.text = '';
+      expiryController.text = '';
       selectedExpiry = null;
       category = null;
     });
@@ -53,9 +56,7 @@ class _ScanPageState extends State<ScanPage> {
       );
 
       if (picked == null) {
-        setState(() {
-          isScanning = false;
-        });
+        setState(() => isScanning = false);
         return;
       }
 
@@ -71,11 +72,8 @@ class _ScanPageState extends State<ScanPage> {
       await recognizer.close();
     } catch (e) {
       showError("OCR failed: $e");
-      ocrSuccess = false;
     } finally {
-      setState(() {
-        isScanning = false;
-      });
+      setState(() => isScanning = false);
     }
   }
 
@@ -92,9 +90,9 @@ class _ScanPageState extends State<ScanPage> {
       // Product detection
       if (!foundProduct && (l.contains("name") || l.contains("product"))) {
         if (line.contains(":")) {
-          productName = line.split(":").last.trim();
+          productController.text = line.split(":").last.trim();
         } else {
-          productName = line.trim();
+          productController.text = line.trim();
         }
         foundProduct = true;
       }
@@ -105,49 +103,48 @@ class _ScanPageState extends State<ScanPage> {
         final match2 = RegExp(r'\d{2}/\d{2}/\d{4}').firstMatch(line);
 
         if (match1 != null) {
-          expiryDate = match1.group(0);
-          selectedExpiry = DateTime.parse(expiryDate!);
+          expiryController.text = match1.group(0)!;
+          selectedExpiry = DateTime.parse(expiryController.text);
           foundDate = true;
         } else if (match2 != null) {
           final parts = match2.group(0)!.split('/');
-          expiryDate = "${parts[2]}-${parts[1]}-${parts[0]}";
-          selectedExpiry = DateTime.parse(expiryDate!);
+          expiryController.text = "${parts[2]}-${parts[1]}-${parts[0]}";
+          selectedExpiry = DateTime.parse(expiryController.text);
           foundDate = true;
         }
       }
     }
 
-    // Fallback (any meaningful line)
+    // Fallback: pick first meaningful line for product
     if (!foundProduct) {
       for (var line in lines) {
-        if (line.trim().length > 3 &&
-            !RegExp(r'^[\d\W]+$').hasMatch(line.trim())) {
-          productName = line.trim();
+        if (line.trim().length > 3 && !RegExp(r'^[\d\W]+$').hasMatch(line.trim())) {
+          productController.text = line.trim();
           foundProduct = true;
           break;
         }
       }
     }
 
-    // Fallback for dates
+    // Fallback for date
     if (!foundDate) {
       final match1 = RegExp(r'\b(20\d{2}-\d{2}-\d{2})\b').firstMatch(text);
       final match2 = RegExp(r'\b(\d{2}/\d{2}/\d{4})\b').firstMatch(text);
 
       if (match1 != null) {
-        expiryDate = match1.group(1);
-        selectedExpiry = DateTime.parse(expiryDate!);
+        expiryController.text = match1.group(1)!;
+        selectedExpiry = DateTime.parse(expiryController.text);
         foundDate = true;
       } else if (match2 != null) {
         final parts = match2.group(1)!.split('/');
-        expiryDate = "${parts[2]}-${parts[1]}-${parts[0]}";
-        selectedExpiry = DateTime.parse(expiryDate!);
+        expiryController.text = "${parts[2]}-${parts[1]}-${parts[0]}";
+        selectedExpiry = DateTime.parse(expiryController.text);
         foundDate = true;
       }
     }
 
     setState(() {
-      ocrSuccess = foundProduct || foundDate;
+      ocrSuccess = foundProduct && foundDate;
       noDetailsFound = !ocrSuccess;
     });
   }
@@ -164,14 +161,14 @@ class _ScanPageState extends State<ScanPage> {
 
     if (picked != null) {
       selectedExpiry = picked;
-      expiryDate = DateFormat('yyyy-MM-dd').format(picked);
+      expiryController.text = DateFormat('yyyy-MM-dd').format(picked);
       setState(() {});
     }
   }
 
   // =================== SAVE TO FIREBASE + NOTIFICATIONS ======================
   Future<void> saveToFirebase() async {
-    if ((productName == null || expiryDate == null) || category == null) {
+    if (productController.text.isEmpty || expiryController.text.isEmpty || category == null) {
       showError("Please complete all fields");
       return;
     }
@@ -189,8 +186,8 @@ class _ScanPageState extends State<ScanPage> {
           .doc(user.uid)
           .collection('receipts')
           .add({
-        'productName': productName,
-        'expiryDate': expiryDate,
+        'productName': productController.text.trim(),
+        'expiryDate': expiryController.text.trim(),
         'category': category,
         'uploadType': 'Scanned',
         'timestamp': FieldValue.serverTimestamp(),
@@ -198,23 +195,22 @@ class _ScanPageState extends State<ScanPage> {
 
       final receiptId = doc.id;
 
-      // ---- Step 5: Auto Notifications ----
-      final expiry = DateTime.parse(expiryDate!);
-
-      final reminder10 = expiry.subtract(const Duration(minutes: 1));
-      final reminder1 = expiry.subtract(const Duration(minutes: 2));
+      // ---- Schedule Notifications ----
+      final expiry = DateTime.parse(expiryController.text);
+      final reminder10 = expiry.subtract(const Duration(days: 10));
+      final reminder1 = expiry.subtract(const Duration(days: 1));
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode,
         title: "Warranty Expiring Soon",
-        body: "$productName warranty expires in 10 days.",
+        body: "${productController.text} warranty expires in 10 days.",
         scheduledTime: reminder10,
       );
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode + 1,
         title: "Warranty Expiring Tomorrow",
-        body: "$productName warranty expires tomorrow!",
+        body: "${productController.text} warranty expires tomorrow!",
         scheduledTime: reminder1,
       );
 
@@ -263,7 +259,6 @@ class _ScanPageState extends State<ScanPage> {
                   child: Image.file(image!, fit: BoxFit.cover),
                 ),
               ),
-
             const SizedBox(height: 16),
 
             if (isScanning)
@@ -274,10 +269,9 @@ class _ScanPageState extends State<ScanPage> {
                   Text("Scanning receipt..."),
                 ],
               ),
-
             const SizedBox(height: 16),
 
-            if (ocrSuccess && extractedText != null)
+            if (extractedText != null && ocrSuccess)
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -286,8 +280,6 @@ class _ScanPageState extends State<ScanPage> {
                 ),
                 child: Text(extractedText!, style: const TextStyle(fontSize: 13)),
               ),
-
-            const SizedBox(height: 16),
 
             if (!ocrSuccess && noDetailsFound)
               Container(
@@ -303,23 +295,20 @@ class _ScanPageState extends State<ScanPage> {
               ),
 
             const SizedBox(height: 12),
-
             TextField(
-              controller: TextEditingController(text: productName),
-              onChanged: (v) => productName = v,
+              controller: productController,
               decoration: const InputDecoration(
                 labelText: "Product Name",
                 border: OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 12),
 
             GestureDetector(
               onTap: pickExpiryDate,
               child: AbsorbPointer(
                 child: TextField(
-                  controller: TextEditingController(text: expiryDate),
+                  controller: expiryController,
                   decoration: const InputDecoration(
                     labelText: "Expiry Date",
                     border: OutlineInputBorder(),
@@ -328,7 +317,6 @@ class _ScanPageState extends State<ScanPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 12),
 
             DropdownButtonFormField<String>(
@@ -342,7 +330,6 @@ class _ScanPageState extends State<ScanPage> {
                   .toList(),
               onChanged: (v) => setState(() => category = v),
             ),
-
             const SizedBox(height: 20),
 
             ElevatedButton.icon(

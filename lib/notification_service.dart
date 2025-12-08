@@ -1,60 +1,93 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tzData;
+import 'dart:io';
 
 class NotificationService {
-  
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  static Future<void> init() async {
+  // ------------------------------------------------------------
+  // INITIALIZE NOTIFICATIONS
+  // ------------------------------------------------------------
+  static Future<void> initialize() async {
+    tzData.initializeTimeZones();
+
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings settings =
-        InitializationSettings(android: androidSettings);
+    const DarwinInitializationSettings iOSSettings =
+        DarwinInitializationSettings();
 
-    await _notifications.initialize(settings);
-    tz.initializeTimeZones();
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iOSSettings,
+    );
 
-    // Request notification permission for Android 13+
-    await _requestPermissions();
+    // Added foreground + click handler
+    await _notifications.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (details) {
+        print("🔔 Notification clicked: ${details.payload}");
+      },
+    );
+
+    // Ask for notification permission on Android 13+
+    if (Platform.isAndroid) {
+      final android = _notifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      final result = await android?.requestPermission();
+      print("🔔 Android notification permission: $result");
+    }
   }
 
-  static Future<void> _requestPermissions() async {
-    // Only needed for Android 13+ (API 33+)
-    final plugin = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    await plugin?.requestPermission();
-  }
-
+  // ------------------------------------------------------------
+  // SCHEDULE A NOTIFICATION
+  // ------------------------------------------------------------
   static Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledTime,
   }) async {
+    final androidDetails = AndroidNotificationDetails(
+      'warranty_channel',
+      'Warranty Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    final iOSDetails = DarwinNotificationDetails();
+
+    final notificationDetails =
+        NotificationDetails(android: androidDetails, iOS: iOSDetails);
+
     await _notifications.zonedSchedule(
       id,
       title,
       body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'warranty_channel',
-          'Warranty Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidAllowWhileIdle: true,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: null,
     );
+
+    print("📅 Notification scheduled at: $scheduledTime");
   }
 
+  // ------------------------------------------------------------
+  // CANCEL SPECIFIC NOTIFICATION
+  // ------------------------------------------------------------
   static Future<void> cancelNotification(int id) async {
     await _notifications.cancel(id);
+  }
+
+  // ------------------------------------------------------------
+  // CANCEL ALL NOTIFICATIONS
+  // ------------------------------------------------------------
+  static Future<void> cancelAllNotifications() async {
+    await _notifications.cancelAll();
   }
 }

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'notification_service.dart'; // <-- IMPORTANT (Make sure this file exists)
+import 'notification_service.dart'; // <-- Make sure this file exists
 
 class TypeReceiptPage extends StatefulWidget {
   const TypeReceiptPage({super.key});
@@ -53,7 +53,7 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
     if (user == null) return;
 
     try {
-      // SAVE TO FIRESTORE
+      // SAVE RECEIPT TO FIRESTORE
       final docRef = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -68,28 +68,29 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
       String receiptId = docRef.id;
 
-      // -----------------------------
-      // 📌 TEST NOTIFICATIONS
-      // -----------------------------
-      final now = DateTime.now();
+      // --------------------------------------------------------
+      // REAL NOTIFICATIONS (10 days before + 1 day before)
+      // --------------------------------------------------------
+      final expiry = selectedDate!;
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode,
-        title: "Test Notification",
-        body: "$product warranty test!",
-        scheduledTime: now.add(const Duration(seconds: 10)), // 10 sec later
+        title: "Warranty Expiring Soon",
+        body: "$product warranty expires in 10 days.",
+        scheduledTime: expiry.subtract(const Duration(days: 10)),
       );
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode + 1,
-        title: "Second Test Notification",
-        body: "$product warranty second test!",
-        scheduledTime: now.add(const Duration(seconds: 20)), // 20 sec later
+        title: "Warranty Expiring Tomorrow",
+        body: "$product warranty expires tomorrow!",
+        scheduledTime: expiry.subtract(const Duration(days: 1)),
       );
 
-      print("Test notifications scheduled for 10s and 20s later.");
+      print("Notifications scheduled for $product");
 
-      // -----------------------------
+      // --------------------------------------------------------
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Receipt Saved Successfully')),
       );
@@ -164,7 +165,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
               ),
               const SizedBox(height: 35),
 
-              // PRODUCT NAME
               const Text(
                 "Product Name",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -184,7 +184,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
               const SizedBox(height: 25),
 
-              // EXPIRY DATE
               const Text(
                 "Expiry Date",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -213,7 +212,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
               const SizedBox(height: 25),
 
-              // CATEGORY
               const Text(
                 "Category",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -246,7 +244,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
               const SizedBox(height: 35),
 
-              // SAVE BUTTON
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

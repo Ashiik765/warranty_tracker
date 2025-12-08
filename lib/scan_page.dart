@@ -118,7 +118,8 @@ class _ScanPageState extends State<ScanPage> {
     // Fallback: pick first meaningful line for product
     if (!foundProduct) {
       for (var line in lines) {
-        if (line.trim().length > 3 && !RegExp(r'^[\d\W]+$').hasMatch(line.trim())) {
+        if (line.trim().length > 3 &&
+            !RegExp(r'^[\d\W]+$').hasMatch(line.trim())) {
           productController.text = line.trim();
           foundProduct = true;
           break;
@@ -168,7 +169,9 @@ class _ScanPageState extends State<ScanPage> {
 
   // =================== SAVE TO FIREBASE + NOTIFICATIONS ======================
   Future<void> saveToFirebase() async {
-    if (productController.text.isEmpty || expiryController.text.isEmpty || category == null) {
+    if (productController.text.isEmpty ||
+        expiryController.text.isEmpty ||
+        category == null) {
       showError("Please complete all fields");
       return;
     }
@@ -197,8 +200,13 @@ class _ScanPageState extends State<ScanPage> {
 
       // ---- Schedule Notifications ----
       final expiry = DateTime.parse(expiryController.text);
-      final reminder10 = expiry.subtract(const Duration(days: 10));
-      final reminder1 = expiry.subtract(const Duration(days: 1));
+
+      // For testing: schedule notifications for 5 seconds from now
+      // In production, change to: 10 days and 1 day before expiry
+      final now = DateTime.now();
+      final reminder10 = now.add(const Duration(seconds: 5)); // Test: 5 seconds
+      final reminder1 =
+          now.add(const Duration(seconds: 10)); // Test: 10 seconds
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode,
@@ -260,7 +268,6 @@ class _ScanPageState extends State<ScanPage> {
                 ),
               ),
             const SizedBox(height: 16),
-
             if (isScanning)
               Column(
                 children: const [
@@ -270,7 +277,6 @@ class _ScanPageState extends State<ScanPage> {
                 ],
               ),
             const SizedBox(height: 16),
-
             if (extractedText != null && ocrSuccess)
               Container(
                 padding: const EdgeInsets.all(10),
@@ -278,9 +284,9 @@ class _ScanPageState extends State<ScanPage> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(extractedText!, style: const TextStyle(fontSize: 13)),
+                child:
+                    Text(extractedText!, style: const TextStyle(fontSize: 13)),
               ),
-
             if (!ocrSuccess && noDetailsFound)
               Container(
                 padding: const EdgeInsets.all(8),
@@ -293,7 +299,6 @@ class _ScanPageState extends State<ScanPage> {
                   style: TextStyle(color: Colors.orange),
                 ),
               ),
-
             const SizedBox(height: 12),
             TextField(
               controller: productController,
@@ -303,7 +308,6 @@ class _ScanPageState extends State<ScanPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             GestureDetector(
               onTap: pickExpiryDate,
               child: AbsorbPointer(
@@ -318,7 +322,6 @@ class _ScanPageState extends State<ScanPage> {
               ),
             ),
             const SizedBox(height: 12),
-
             DropdownButtonFormField<String>(
               value: category,
               decoration: const InputDecoration(
@@ -331,7 +334,6 @@ class _ScanPageState extends State<ScanPage> {
               onChanged: (v) => setState(() => category = v),
             ),
             const SizedBox(height: 20),
-
             ElevatedButton.icon(
               onPressed: saveToFirebase,
               icon: const Icon(Icons.save),

@@ -192,8 +192,12 @@ class _ImportPageState extends State<ImportPage> {
 
     // =================== Schedule Notifications ======================
     if (_selectedExpiry != null) {
-      final reminder10 = _selectedExpiry!.subtract(const Duration(days: 10));
-      final reminder1 = _selectedExpiry!.subtract(const Duration(days: 1));
+      // For testing: schedule notifications for 5 seconds from now
+      // In production, change to: 10 days and 1 day before expiry
+      final now = DateTime.now();
+      final reminder10 = now.add(const Duration(seconds: 5)); // Test: 5 seconds
+      final reminder1 =
+          now.add(const Duration(seconds: 10)); // Test: 10 seconds
 
       NotificationService.scheduleNotification(
         id: receiptRef.id.hashCode,
@@ -237,12 +241,30 @@ class _ImportPageState extends State<ImportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Import Warranty')),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        title: const Text('Import Warranty'),
+        backgroundColor: const Color(0xFF1D4AB4),
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: pickFile,
-            child: const Text('Pick PDF or Image'),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton.icon(
+              onPressed: pickFile,
+              icon: const Icon(Icons.image, size: 24),
+              label: const Text('Select Image or PDF'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1D4AB4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
           if (_selectedFile != null)
             Expanded(
@@ -250,51 +272,172 @@ class _ImportPageState extends State<ImportPage> {
                 children: [
                   Row(
                     children: [
+                      // Image Preview
                       Expanded(
-                        child: _selectedFile!.path.endsWith('.pdf')
-                            ? SfPdfViewer.file(_selectedFile!)
-                            : Image.file(_selectedFile!),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Column(
-                            children: [
-                              TextField(
-                                controller: productController,
-                                decoration: const InputDecoration(
-                                    labelText: 'Product Name'),
-                              ),
-                              GestureDetector(
-                                onTap: pickExpiryDate,
-                                child: AbsorbPointer(
-                                  child: TextField(
-                                    controller: expiryController,
-                                    decoration: const InputDecoration(
-                                        labelText: 'Expiry Date'),
-                                  ),
-                                ),
-                              ),
-                              DropdownButton<String>(
-                                value: _selectedCategory,
-                                items: categories
-                                    .map((cat) => DropdownMenuItem(
-                                        value: cat, child: Text(cat)))
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      _selectedCategory = value;
-                                    });
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: saveToFirebase,
-                                child: const Text('Save'),
+                        flex: 1,
+                        child: Container(
+                          margin: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
                             ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: _selectedFile!.path.endsWith('.pdf')
+                                ? SfPdfViewer.file(_selectedFile!)
+                                : Image.file(_selectedFile!, fit: BoxFit.cover),
+                          ),
+                        ),
+                      ),
+                      // Form Fields
+                      Expanded(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const Text(
+                                  'Warranty Details',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1D4AB4),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // Product Name Field
+                                TextField(
+                                  controller: productController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Product Name',
+                                    labelStyle: const TextStyle(
+                                        color: Color(0xFF1D4AB4)),
+                                    prefixIcon: const Icon(Icons.shopping_bag,
+                                        color: Color(0xFF1D4AB4)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFFE0E0E0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFFE0E0E0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(
+                                          color: Color(0xFF1D4AB4), width: 2),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Expiry Date Field
+                                GestureDetector(
+                                  onTap: pickExpiryDate,
+                                  child: AbsorbPointer(
+                                    child: TextField(
+                                      controller: expiryController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Expiry Date',
+                                        labelStyle: const TextStyle(
+                                            color: Color(0xFF1D4AB4)),
+                                        prefixIcon: const Icon(
+                                            Icons.calendar_today,
+                                            color: Color(0xFF1D4AB4)),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFFE0E0E0)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFFE0E0E0)),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                              color: Color(0xFF1D4AB4),
+                                              width: 2),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Category Dropdown
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(
+                                        color: const Color(0xFFE0E0E0)),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: DropdownButton<String>(
+                                    value: _selectedCategory,
+                                    isExpanded: true,
+                                    underline: const SizedBox(),
+                                    hint: const Text('Select Category'),
+                                    items: categories
+                                        .map((cat) => DropdownMenuItem(
+                                            value: cat,
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _getCategoryIcon(cat),
+                                                  color:
+                                                      const Color(0xFF1D4AB4),
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(cat),
+                                              ],
+                                            )))
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          _selectedCategory = value;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                // Save Button
+                                ElevatedButton.icon(
+                                  onPressed: saveToFirebase,
+                                  icon: const Icon(Icons.save, size: 20),
+                                  label: const Text('Save Warranty'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1D4AB4),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -303,7 +446,23 @@ class _ImportPageState extends State<ImportPage> {
                   if (_isProcessing)
                     Container(
                       color: Colors.black.withOpacity(0.3),
-                      child: const Center(child: CircularProgressIndicator()),
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: Colors.white),
+                            SizedBox(height: 16),
+                            Text(
+                              'Processing Image...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -311,5 +470,18 @@ class _ImportPageState extends State<ImportPage> {
         ],
       ),
     );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'electronics':
+        return Icons.electrical_services;
+      case 'vehicle':
+        return Icons.directions_car;
+      case 'home appliances':
+        return Icons.kitchen;
+      default:
+        return Icons.category;
+    }
   }
 }

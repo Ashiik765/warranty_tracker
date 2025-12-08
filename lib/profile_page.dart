@@ -60,31 +60,49 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      final storageRef =
-          FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
+      // Use a unique filename with timestamp to avoid conflicts
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'profile_images/${user.uid}_$timestamp.jpg';
+      final storageRef = FirebaseStorage.instance.ref().child(fileName);
 
-      // 1️⃣ Upload file first
-      await storageRef.putFile(file);
-
-      // 2️⃣ Get download URL after upload
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // 3️⃣ Save download URL to Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({'photoUrl': downloadUrl}, SetOptions(merge: true));
-
-      setState(() {
-        photoUrl = downloadUrl; // Update UI with uploaded image
-      });
-
+      // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile picture updated!")),
+        const SnackBar(content: Text("Uploading profile picture...")),
       );
+
+      // Upload file
+      final uploadTask = await storageRef.putFile(file);
+
+      // Wait for upload to complete and get metadata
+      if (uploadTask.state == TaskState.success) {
+        // Add a small delay to ensure file is written
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Get download URL
+        final downloadUrl = await storageRef.getDownloadURL();
+
+        // Save download URL to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({'photoUrl': downloadUrl}, SetOptions(merge: true));
+
+        setState(() {
+          photoUrl = downloadUrl; // Update UI with uploaded image
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profile picture updated!")),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error: $e")));
+      print('Error uploading image: $e');
+      setState(() {
+        _image = null; // Clear preview on error
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error uploading: $e")),
+      );
     }
   }
 
@@ -94,13 +112,25 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user == null) return;
 
     try {
-      final storageRef =
-          FirebaseStorage.instance.ref().child('profile_images/${user.uid}.jpg');
+      // Get current photoUrl from Firestore
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-      // Delete file in storage (ignore error if not exist)
-      await storageRef.delete().catchError((_) {});
+      final currentPhotoUrl = doc.data()?['photoUrl'];
 
-      // Remove photoUrl in Firestore
+      if (currentPhotoUrl != null) {
+        try {
+          // Delete from storage using the URL
+          await FirebaseStorage.instance.refFromURL(currentPhotoUrl).delete();
+        } catch (e) {
+          // If file not found in storage, continue anyway
+          print('Storage file not found (OK): $e');
+        }
+      }
+
+      // Remove photoUrl from Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -115,8 +145,10 @@ class _ProfilePageState extends State<ProfilePage> {
         const SnackBar(content: Text("Profile picture removed.")),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Error removing image: $e")));
+      print('Error removing image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error removing image: $e")),
+      );
     }
   }
 
@@ -334,8 +366,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: "Home",
                 active: false,
                 onTap: () {
-                  Navigator.pushReplacement(
-                      context,
+                  Navigator.pushReplacement(context,
                       MaterialPageRoute(builder: (_) => const HomePage()));
                 }),
             _bottomNavItem(
@@ -343,8 +374,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: "Product",
                 active: false,
                 onTap: () {
-                  Navigator.pushReplacement(
-                      context,
+                  Navigator.pushReplacement(context,
                       MaterialPageRoute(builder: (_) => const ProductPage()));
                 }),
             _bottomNavItem(

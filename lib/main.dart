@@ -8,18 +8,16 @@ import 'login_page.dart';
 import 'home_page.dart';
 import 'notification_service.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await NotificationService.initialize(); // Initialize notification service
   runApp(const MyApp());
-
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -44,17 +42,26 @@ class _RootPageState extends State<RootPage> {
   @override
   void initState() {
     super.initState();
-    _checkIntroSeen();
+    _checkAppState();
   }
 
-  Future<void> _checkIntroSeen() async {
+  Future<void> _checkAppState() async {
     final prefs = await SharedPreferences.getInstance();
     final seen = prefs.getBool('intro_seen') ?? false;
+
+    // Check if user is already logged in
+    final user = FirebaseAuth.instance.currentUser;
+
     setState(() {
-      _firstTime = !seen;
+      // If user is logged in, skip intro regardless of intro_seen flag
+      if (user != null) {
+        _firstTime = false;
+      } else {
+        _firstTime = !seen;
+      }
       _loading = false;
     });
-    print('DEBUG startup: intro_seen=${seen}');
+    print('DEBUG startup: intro_seen=${seen}, user=${user?.email}');
   }
 
   @override
@@ -72,7 +79,8 @@ class _RootPageState extends State<RootPage> {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
         }
 
         if (snapshot.hasData && snapshot.data != null) {

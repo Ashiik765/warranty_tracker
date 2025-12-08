@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
 
+  Future<void> _markIntroSeen(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('intro_seen', true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -17,7 +22,6 @@ class IntroPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-
                 const SizedBox(height: 30),
 
                 // ----------- Title -----------
@@ -47,7 +51,7 @@ class IntroPage extends StatelessWidget {
 
                 // ----------- Illustration Image -----------
                 Image.asset(
-                  "assets/intro.png",   // <--- Put your image here!
+                  "assets/intro.png", // <--- Put your image here!
                   height: 200,
                 ),
 
@@ -57,10 +61,12 @@ class IntroPage extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await _markIntroSeen(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -83,10 +89,12 @@ class IntroPage extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      await _markIntroSeen(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignUpPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const SignUpPage()),
                       );
                     },
                     style: ElevatedButton.styleFrom(

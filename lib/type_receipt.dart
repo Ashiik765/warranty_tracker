@@ -69,22 +69,27 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
       String receiptId = docRef.id;
 
       // --------------------------------------------------------
-      // REAL NOTIFICATIONS (10 days before + 1 day before)
+      // TEST NOTIFICATIONS (5 and 10 seconds from now)
       // --------------------------------------------------------
-      final expiry = selectedDate!;
+      // For testing: schedule notifications for 5 seconds from now
+      // In production, change to: 10 days and 1 day before expiry
+      final now = DateTime.now();
+      final reminder10 = now.add(const Duration(seconds: 5)); // Test: 5 seconds
+      final reminder1 =
+          now.add(const Duration(seconds: 10)); // Test: 10 seconds
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode,
         title: "Warranty Expiring Soon",
         body: "$product warranty expires in 10 days.",
-        scheduledTime: expiry.subtract(const Duration(days: 10)),
+        scheduledTime: reminder10,
       );
 
       NotificationService.scheduleNotification(
         id: receiptId.hashCode + 1,
         title: "Warranty Expiring Tomorrow",
         body: "$product warranty expires tomorrow!",
-        scheduledTime: expiry.subtract(const Duration(days: 1)),
+        scheduledTime: reminder1,
       );
 
       print("Notifications scheduled for $product");
@@ -96,7 +101,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
       );
 
       Navigator.pop(context);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Error saving receipt: $e')),
@@ -134,7 +138,6 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
           ),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Container(
@@ -164,13 +167,11 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
                 ),
               ),
               const SizedBox(height: 35),
-
               const Text(
                 "Product Name",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
               TextField(
                 controller: productController,
                 decoration: InputDecoration(
@@ -181,15 +182,12 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
                   prefixIcon: const Icon(Icons.shopping_bag),
                 ),
               ),
-
               const SizedBox(height: 25),
-
               const Text(
                 "Expiry Date",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -209,15 +207,12 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
                   onTap: pickDate,
                 ),
               ),
-
               const SizedBox(height: 25),
-
               const Text(
                 "Category",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: InputDecoration(
@@ -241,9 +236,7 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
                   });
                 },
               ),
-
               const SizedBox(height: 35),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

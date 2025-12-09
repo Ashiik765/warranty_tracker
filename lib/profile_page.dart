@@ -60,23 +60,41 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      // Use a unique filename with timestamp to avoid conflicts
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'profile_images/${user.uid}_$timestamp.jpg';
-      final storageRef = FirebaseStorage.instance.ref().child(fileName);
-
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Uploading profile picture...")),
       );
 
-      // Upload file
-      final uploadTask = await storageRef.putFile(file);
+      // Delete old image first (if exists)
+      final oldDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final oldPhotoUrl = oldDoc.data()?['photoUrl'];
+      if (oldPhotoUrl != null && oldPhotoUrl.isNotEmpty) {
+        try {
+          await FirebaseStorage.instance.refFromURL(oldPhotoUrl).delete();
+          print('✓ Old image deleted');
+        } catch (e) {
+          print('⚠ Old image not found or already deleted: $e');
+        }
+      }
 
-      // Wait for upload to complete and get metadata
-      if (uploadTask.state == TaskState.success) {
-        // Add a small delay to ensure file is written
-        await Future.delayed(const Duration(milliseconds: 500));
+      // Use a unique filename with timestamp to avoid conflicts
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'profile_images/${user.uid}_$timestamp.jpg';
+      final storageRef = FirebaseStorage.instance.ref().child(fileName);
+
+      // Upload file
+      final uploadTask = storageRef.putFile(file);
+
+      // Wait for upload to complete
+      await uploadTask;
+
+      // Verify upload was successful
+      try {
+        // Add delay to ensure file is finalized in storage
+        await Future.delayed(const Duration(milliseconds: 1000));
 
         // Get download URL
         final downloadUrl = await storageRef.getDownloadURL();
@@ -85,24 +103,33 @@ class _ProfilePageState extends State<ProfilePage> {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
-            .set({'photoUrl': downloadUrl}, SetOptions(merge: true));
+            .update({'photoUrl': downloadUrl});
 
         setState(() {
           photoUrl = downloadUrl; // Update UI with uploaded image
+          _image = null; // Clear local preview
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile picture updated!")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile picture updated!")),
+          );
+        }
+      } catch (e) {
+        print('Error getting download URL: $e');
+        throw Exception('Failed to get download URL: $e');
       }
     } catch (e) {
       print('Error uploading image: $e');
       setState(() {
         _image = null; // Clear preview on error
+        photoUrl = null; // Reset to default
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error uploading: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error uploading: $e")),
+        );
+      }
     }
   }
 

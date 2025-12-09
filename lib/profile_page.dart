@@ -382,31 +382,36 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        color: const Color(0xFF1D4AB4),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _bottomNavItem(
-                icon: Icons.home,
-                label: "Home",
-                active: false,
-                onTap: () {
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (_) => const HomePage()));
-                }),
-            _bottomNavItem(
-                icon: Icons.shopping_bag,
-                label: "Product",
-                active: false,
-                onTap: () {
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (_) => const ProductPage()));
-                }),
-            _bottomNavItem(
-                icon: Icons.person, label: "User", active: true, onTap: () {}),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          color: const Color(0xFF1D4AB4),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _bottomNavItem(
+                  icon: Icons.home,
+                  label: "Home",
+                  active: false,
+                  onTap: () {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (_) => const HomePage()));
+                  }),
+              _bottomNavItem(
+                  icon: Icons.shopping_bag,
+                  label: "Product",
+                  active: false,
+                  onTap: () {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (_) => const ProductPage()));
+                  }),
+              _bottomNavItem(
+                  icon: Icons.person,
+                  label: "User",
+                  active: true,
+                  onTap: () {}),
+            ],
+          ),
         ),
       ),
     );

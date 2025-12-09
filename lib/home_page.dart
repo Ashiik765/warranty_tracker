@@ -343,34 +343,36 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            Container(
-              color: Colors.blue,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _bottomNavItem(
-                      icon: Icons.home,
-                      label: 'Home',
-                      active: true,
-                      onTap: () {}),
-                  _bottomNavItem(
-                      icon: Icons.shopping_bag,
-                      label: 'Product',
-                      active: false,
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ProductPage()))),
-                  _bottomNavItem(
-                      icon: Icons.person,
-                      label: 'User',
-                      active: false,
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ProfilePage()))),
-                ],
+            SafeArea(
+              child: Container(
+                color: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _bottomNavItem(
+                        icon: Icons.home,
+                        label: 'Home',
+                        active: true,
+                        onTap: () {}),
+                    _bottomNavItem(
+                        icon: Icons.shopping_bag,
+                        label: 'Product',
+                        active: false,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ProductPage()))),
+                    _bottomNavItem(
+                        icon: Icons.person,
+                        label: 'User',
+                        active: false,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const ProfilePage()))),
+                  ],
+                ),
               ),
             ),
           ],

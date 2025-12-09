@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'notification_service.dart'; // <-- Make sure this file exists
+// NotificationService removed — no notifications will be scheduled
 
 class TypeReceiptPage extends StatefulWidget {
   const TypeReceiptPage({super.key});
@@ -54,7 +54,7 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
 
     try {
       // SAVE RECEIPT TO FIRESTORE
-      final docRef = await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('receipts')
@@ -66,35 +66,7 @@ class _TypeReceiptPageState extends State<TypeReceiptPage> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      String receiptId = docRef.id;
-
-      // --------------------------------------------------------
-      // TEST NOTIFICATIONS (5 and 10 seconds from now)
-      // --------------------------------------------------------
-      // For testing: schedule notifications for 5 seconds from now
-      // In production, change to: 10 days and 1 day before expiry
-      final now = DateTime.now();
-      final reminder10 = now.add(const Duration(seconds: 5)); // Test: 5 seconds
-      final reminder1 =
-          now.add(const Duration(seconds: 10)); // Test: 10 seconds
-
-      NotificationService.scheduleNotification(
-        id: receiptId.hashCode,
-        title: "Warranty Expiring Soon",
-        body: "$product warranty expires in 10 days.",
-        scheduledTime: reminder10,
-      );
-
-      NotificationService.scheduleNotification(
-        id: receiptId.hashCode + 1,
-        title: "Warranty Expiring Tomorrow",
-        body: "$product warranty expires tomorrow!",
-        scheduledTime: reminder1,
-      );
-
-      print("Notifications scheduled for $product");
-
-      // --------------------------------------------------------
+      // Notifications removed — scheduling disabled
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Receipt Saved Successfully')),

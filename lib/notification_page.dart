@@ -121,7 +121,8 @@ class NotificationPage extends StatelessWidget {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No notifications available."));
+                  return const Center(
+                      child: Text("No notifications available."));
                 }
 
                 final docs = snapshot.data!.docs;
@@ -169,7 +170,6 @@ class NotificationPage extends StatelessWidget {
                           children: [
                             getCategoryIcon(data['category']),
                             const SizedBox(width: 15),
-
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,63 +205,61 @@ class NotificationPage extends StatelessWidget {
       ),
 
       // 🔹 Bottom Navigation
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1D4AB4),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _bottomNavItem(
-              icon: Icons.home,
-              label: 'Home',
-              active: false,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
-              },
-            ),
-
-            _bottomNavItem(
-              icon: Icons.notifications,
-              label: 'Products',
-              active: true,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProductPage()),
-                );
-              },
-            ),
-
-            _bottomNavItem(
-              icon: Icons.person,
-              label: 'User',
-              active: false,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                );
-              },
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D4AB4),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _bottomNavItem(
+                icon: Icons.home,
+                label: 'Home',
+                active: false,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomePage()),
+                  );
+                },
+              ),
+              _bottomNavItem(
+                icon: Icons.notifications,
+                label: 'Products',
+                active: true,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProductPage()),
+                  );
+                },
+              ),
+              _bottomNavItem(
+                icon: Icons.person,
+                label: 'User',
+                active: false,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-

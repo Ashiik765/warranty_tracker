@@ -109,51 +109,53 @@ class ProductPage extends StatelessWidget {
       ),
 
       // 🔹 SAME BLUE BOTTOM NAV BAR
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1D4AB4),
-          borderRadius: BorderRadius.zero,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _bottomNavItem(
-              icon: Icons.home,
-              label: 'Home',
-              active: false,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
-              },
-            ),
-            _bottomNavItem(
-              icon: Icons.shopping_bag,
-              label: 'Product',
-              active: true,
-              onTap: () {},
-            ),
-            _bottomNavItem(
-              icon: Icons.person,
-              label: 'User',
-              active: false,
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfilePage()),
-                );
-              },
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D4AB4),
+            borderRadius: BorderRadius.zero,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _bottomNavItem(
+                icon: Icons.home,
+                label: 'Home',
+                active: false,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomePage()),
+                  );
+                },
+              ),
+              _bottomNavItem(
+                icon: Icons.shopping_bag,
+                label: 'Product',
+                active: true,
+                onTap: () {},
+              ),
+              _bottomNavItem(
+                icon: Icons.person,
+                label: 'User',
+                active: false,
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

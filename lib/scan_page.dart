@@ -5,7 +5,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'notification_service.dart';
+// Notifications removed — NotificationService no longer used
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -184,7 +184,7 @@ class _ScanPageState extends State<ScanPage> {
 
     try {
       // ---- Save Record ----
-      final doc = await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('receipts')
@@ -196,31 +196,7 @@ class _ScanPageState extends State<ScanPage> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      final receiptId = doc.id;
-
-      // ---- Schedule Notifications ----
-      final expiry = DateTime.parse(expiryController.text);
-
-      // For testing: schedule notifications for 5 seconds from now
-      // In production, change to: 10 days and 1 day before expiry
-      final now = DateTime.now();
-      final reminder10 = now.add(const Duration(seconds: 5)); // Test: 5 seconds
-      final reminder1 =
-          now.add(const Duration(seconds: 10)); // Test: 10 seconds
-
-      NotificationService.scheduleNotification(
-        id: receiptId.hashCode,
-        title: "Warranty Expiring Soon",
-        body: "${productController.text} warranty expires in 10 days.",
-        scheduledTime: reminder10,
-      );
-
-      NotificationService.scheduleNotification(
-        id: receiptId.hashCode + 1,
-        title: "Warranty Expiring Tomorrow",
-        body: "${productController.text} warranty expires tomorrow!",
-        scheduledTime: reminder1,
-      );
+      // Notifications removed — scheduling disabled
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Receipt saved successfully")),

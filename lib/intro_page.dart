@@ -113,17 +113,6 @@ class IntroPage extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // ----------- Help Text -----------
-                TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "Help",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
